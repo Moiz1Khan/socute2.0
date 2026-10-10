@@ -5,7 +5,8 @@ export const categories = [
   { id: 'polaroids', title: 'Polaroids & prints' },
   { id: 'stationery', title: 'Printables' },
   { id: 'albums', title: 'Magazines & Albums' },
-  { id: 'gifts', title: 'Gifts & decor' },
+  { id: 'frames', title: 'Frames' },
+  { id: 'tote-bags', title: 'Tote Bags' },
 ]
 
 export const products = [
@@ -70,7 +71,7 @@ export const products = [
     id: 'mini-frame',
     slug: 'mini-frame',
     name: 'Mini Frame',
-    category: 'gifts',
+    category: 'frames',
     image: '/images/mini-frame-1.png',
     imageAlt:
       'Personalized mini frame collage with photos and decorative details, held against green leaves.',
@@ -155,7 +156,7 @@ export const products = [
     id: 'keepsake-frame',
     slug: 'keepsake-frame',
     name: 'Keepsake Frame',
-    category: 'gifts',
+    category: 'frames',
     image: '/images/keepsake-frame-1.png',
     imageAlt:
       'Personalized keepsake photo frames — black-and-white collages with custom text in A4 and A3 sizes.',
@@ -346,7 +347,7 @@ export const products = [
     id: 'mini-bouquet',
     slug: 'mini-bouquet',
     name: 'Mini Bouquet',
-    category: 'gifts',
+    category: 'frames',
     image: '/images/mini-bouquet.png',
     imageAlt:
       'Personalized SoCutesy mini bouquet wrapped in pink paper with Polaroid photos, jewelry, and beauty gifts.',
@@ -362,6 +363,71 @@ export const products = [
       'Jelly tint',
     ],
     price: 4000,
+  },
+  {
+    id: 'cd-journal',
+    slug: 'cd-journal',
+    name: 'CD Journal',
+    category: 'frames',
+    image:
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791543524/socutesy/cd/cd-1.jpg',
+    images: [
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791543524/socutesy/cd/cd-1.jpg',
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791543526/socutesy/cd/cd-2.jpg',
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791543528/socutesy/cd/cd-3.jpg',
+    ],
+    imageAlt:
+      'Personalized CD journal — Lover scrapbook disc, vinyl-style designs, and photo collage CD cases.',
+    description:
+      'A custom CD journal with your songs, photos, and a personalized cover — perfect keepsakes.',
+    detailBullets: [
+      'Custom cover design',
+      'Your track list / playlist',
+      'Photo collage CD cases',
+      'Gift-ready packaging',
+    ],
+    price: 1500,
+  },
+  {
+    id: 'phone-case',
+    slug: 'phone-case',
+    name: 'Phone Case',
+    category: 'frames',
+    image:
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791545264/socutesy/phone-case/phone-case-1.jpg',
+    images: [
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791545264/socutesy/phone-case/phone-case-1.jpg',
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791545266/socutesy/phone-case/phone-case-2.jpg',
+      'https://res.cloudinary.com/jdnt65gb/image/upload/v1791545268/socutesy/phone-case/phone-case-3.jpg',
+    ],
+    imageAlt:
+      'Personalized phone cases — collage sticker cases with photos, lyrics, and cute details.',
+    description:
+      'A custom phone case with your photos or design — cute, personal, everyday wear.',
+    detailBullets: [
+      'Upload your photos or send a design',
+      'Compatible case styles on request',
+      'Durable print finish',
+    ],
+    price: 1200,
+  },
+  {
+    id: 'tote-bag',
+    slug: 'tote-bag',
+    name: 'Tote Bag',
+    category: 'tote-bags',
+    image: '/images/tote-bag-1.png?v=2',
+    images: ['/images/tote-bag-1.png?v=2', '/images/tote-bag-2.jpg?v=2'],
+    imageAlt:
+      'Custom canvas tote bags — peacock floral print and playful smiley designs.',
+    description:
+      'A custom tote bag with your photos or design — cute, everyday, gift-ready.',
+    detailBullets: [
+      'Custom print design',
+      'Durable everyday tote',
+      'Send your photos or artwork on WhatsApp',
+    ],
+    price: 1500,
   },
   {
     id: 'mini-album',

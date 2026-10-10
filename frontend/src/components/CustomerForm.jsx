@@ -11,12 +11,12 @@ const initial = {
 }
 
 const inputClass =
-  'mt-1.5 w-full rounded-2xl border border-[#fbcfe8] bg-white px-4 py-3.5 text-sm font-medium text-[#831843] shadow-sm outline-none transition placeholder:text-[#9ca3af] focus:border-[#be3d6a] focus:ring-2 focus:ring-[#fbcfe8]'
+  'mt-1.5 w-full rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-3.5 text-sm font-medium text-[#704456] shadow-sm outline-none transition placeholder:text-[#9ca3af] focus:border-[#e77da8] focus:ring-2 focus:ring-[#fbcfe8]'
 
 function Field({ label, required, optional, children, error }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-[#9d174d]">
+      <label className="block text-sm font-semibold text-[#a85c7b]">
         {label}{' '}
         {required ? (
           <span className="text-[#e11d48]">*</span>
@@ -145,18 +145,18 @@ export function CustomerForm({
         />
       </Field>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#fbcfe8] bg-[#fffafc] px-4 py-4 shadow-sm transition hover:border-[#f9a8d4] hover:bg-[#fdf2f8]">
+      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-4 shadow-sm transition hover:border-[#f9a8d4] hover:bg-[#ffe4ef]">
         <input
           type="checkbox"
           checked={values.includeDelivery}
           onChange={(e) => {
             setValues((v) => ({ ...v, includeDelivery: e.target.checked }))
           }}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#fbcfe8] text-[#db2777] accent-[#be3d6a] focus:ring-2 focus:ring-[#fbcfe8]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#fbcfe8] text-[#e77da8] accent-[#e77da8] focus:ring-2 focus:ring-[#fbcfe8]"
         />
-        <span className="text-left text-sm text-[#831843]">
+        <span className="text-left text-sm text-[#704456]">
           <span className="font-semibold">Include delivery</span>
-          <span className="mt-0.5 block text-xs font-medium text-[#9d174d]/90">
+          <span className="mt-0.5 block text-xs font-medium text-[#a85c7b]/90">
             Fixed delivery charge: RS. {DELIVERY_CHARGE_RS.toLocaleString()}{' '}
             (added to your total)
           </span>
@@ -166,7 +166,7 @@ export function CustomerForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-2xl bg-gradient-to-r from-[#d1567f] to-[#be3d6a] py-4 text-sm font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-gradient-to-r from-[#e77da8] to-[#e77da8] py-4 text-sm font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? 'Saving order…' : submitLabel}
       </button>

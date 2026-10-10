@@ -164,11 +164,11 @@ export default function CustomerFormPage() {
   const headingContext = isCartCheckout ? 'your cart order' : product.name
 
   return (
-    <main className="min-h-[70vh] bg-gradient-to-b from-[#FCECEF]/60 via-white to-white px-4 py-10 sm:px-6 lg:py-14">
+    <main className="min-h-[70vh] bg-gradient-to-b from-[#fff7fa] via-[#fff0f6] to-[#fadce8] px-4 py-10 sm:px-6 lg:py-14">
       <div className="mx-auto max-w-2xl">
         <Link
           to={backHref}
-          className="mb-6 inline-flex text-sm font-medium text-[#9d174d] transition hover:text-[#831843]"
+          className="mb-6 inline-flex text-sm font-semibold text-[#a85c7b] transition hover:text-[#e77da8]"
         >
           {backLabel}
         </Link>
@@ -177,10 +177,10 @@ export default function CustomerFormPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="overflow-hidden rounded-[2rem] border border-[#f5d0e6]/80 bg-white shadow-xl shadow-pink-100/50"
+          className="overflow-hidden rounded-[2rem] border border-[#f5b5cf]/90 bg-[#fff7fa] shadow-xl shadow-[#e77da8]/15"
         >
-          <div className="bg-gradient-to-r from-[#be3d6a] to-[#d1567f] px-6 py-6 sm:px-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+          <div className="bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-6 sm:px-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
               Step 1 of 2
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold text-white sm:text-4xl">

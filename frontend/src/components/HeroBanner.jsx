@@ -1,319 +1,356 @@
-import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useRef } from 'react'
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from 'framer-motion'
+import { SatinBow } from './decor/SatinBow'
+import { easeOut, heroStagger, springSnappy } from '../utils/motionPresets'
 
-const BG = '#FCECEF'
-const PINK = '#D96B8C'
-const PINK_SOFT = '#E89BB3'
-const INK = '#1E1B3A'
-const HEADING = '#831843'
+const INSTAGRAM_URL = 'https://www.instagram.com/socutesyyy_/'
 
-const SLIDE_MS = 5000
-
-const bestsellers = [
-  'Custom Magazines',
-  'Newspapers',
-  'Mini Albums',
-  'Polaroids',
-  'Photo Booth Strips',
-]
-
-const mockupImages = [
-  { src: '/images/magazine-1.png', label: 'Magazine', className: 'left-[4%] top-[8%] w-[38%] rotate-[-6deg]' },
-  { src: '/images/newspaper-1.png', label: 'Newspaper', className: 'right-[6%] top-[4%] w-[36%] rotate-[5deg]' },
-  { src: '/images/polaroids-1.png', label: 'Polaroids', className: 'left-[10%] bottom-[10%] w-[28%] rotate-[4deg]' },
-  { src: '/images/keepsake-frame-1.png', label: 'Frame', className: 'right-[8%] bottom-[8%] w-[30%] rotate-[-4deg]' },
-  { src: '/images/photobooth-strips-1.png', label: 'Strips', className: 'left-[42%] top-[28%] w-[18%] rotate-[8deg]' },
-  { src: '/images/mini-album-1.png', label: 'Album', className: 'right-[36%] bottom-[18%] w-[24%] rotate-[-8deg]' },
-]
-
-const whyCards = [
-  { title: 'Fully Personalized', icon: 'bow' },
-  { title: 'Premium Printing', icon: 'sparkle' },
-  { title: 'Pakistan Wide Delivery', icon: 'truck' },
-  { title: 'Handmade with Love', icon: 'heart' },
-]
-
-function CtaLink({ children }) {
+function HeartIcon({ className }) {
   return (
-    <a
-      href="#products-top"
-      className="group inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition sm:text-base"
-      style={{ color: PINK }}
-    >
-      {children}
-      <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
-        →
-      </span>
-    </a>
-  )
-}
-
-function FloatingDecor() {
-  const items = [
-    { type: 'heart', top: '12%', left: '8%', delay: 0, size: 18 },
-    { type: 'star', top: '18%', right: '12%', delay: 0.4, size: 14 },
-    { type: 'sparkle', top: '55%', left: '6%', delay: 0.8, size: 12 },
-    { type: 'heart', bottom: '18%', right: '10%', delay: 1.2, size: 16 },
-    { type: 'star', bottom: '12%', left: '16%', delay: 0.2, size: 20 },
-    { type: 'sparkle', top: '40%', right: '7%', delay: 1.6, size: 10 },
-    { type: 'heart', top: '70%', left: '48%', delay: 0.6, size: 12 },
-  ]
-
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {items.map((item, i) => (
-        <motion.span
-          key={i}
-          className="absolute"
-          style={{
-            top: item.top,
-            left: item.left,
-            right: item.right,
-            bottom: item.bottom,
-            width: item.size,
-            height: item.size,
-            color: PINK_SOFT,
-          }}
-          animate={{ y: [0, -10, 0], opacity: [0.35, 0.7, 0.35] }}
-          transition={{
-            duration: 4 + (i % 3),
-            repeat: Infinity,
-            delay: item.delay,
-            ease: 'easeInOut',
-          }}
-        >
-          {item.type === 'heart' && (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-full w-full">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          )}
-          {item.type === 'star' && (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-full w-full">
-              <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z" />
-            </svg>
-          )}
-          {item.type === 'sparkle' && (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-full w-full">
-              <path d="M12 2l1.2 6.3L19 10l-5.8 1.7L12 18l-1.2-6.3L5 10l5.8-1.7L12 2zm7 11l.7 3.3L23 17l-3.3.7L19 21l-.7-3.3L15 17l3.3-.7L19 13z" />
-            </svg>
-          )}
-        </motion.span>
-      ))}
-    </div>
-  )
-}
-
-function WhyIcon({ type }) {
-  const common = 'h-7 w-7'
-  if (type === 'bow') {
-    return (
-      <svg className={common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-        <path d="M12 12c2-3 5-4 7-2s1 5-2 6c-2 1-4 0-5-2-1 2-3 3-5 2-3-1-4-4-2-6s5 1 7 2z" strokeLinejoin="round" />
-        <path d="M12 12v7" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (type === 'sparkle') {
-    return (
-      <svg className={common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-        <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (type === 'truck') {
-    return (
-      <svg className={common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-        <path d="M3 7h11v10H3zM14 10h4l3 3v4h-7V10z" strokeLinejoin="round" />
-        <circle cx="7" cy="18" r="1.5" />
-        <circle cx="17" cy="18" r="1.5" />
-      </svg>
-    )
-  }
-  return (
-    <svg className={common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   )
 }
 
-function SlideWelcome() {
+function DreamAtmosphere({ reduceMotion }) {
   return (
-    <div className="relative flex min-h-[28rem] flex-col items-center justify-center px-6 py-16 text-center sm:min-h-[32rem] sm:py-20">
-      <FloatingDecor />
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+    <div className="hero-dream" aria-hidden>
+      <div className="hero-dream__base" />
+      <div className="hero-dream__mesh" />
+      <div className="hero-dream__orb hero-dream__orb--a" />
+      <div className="hero-dream__orb hero-dream__orb--b" />
+      <div className="hero-dream__orb hero-dream__orb--c" />
+      <div className="hero-dream__ribbon hero-dream__ribbon--l" />
+      <div className="hero-dream__ribbon hero-dream__ribbon--r" />
+      <div className="hero-dream__satin hero-dream__satin--a" />
+      <div className="hero-dream__satin hero-dream__satin--b" />
+
+      {!reduceMotion && (
+        <>
+          <motion.div
+            className="hero-dream__float hero-dream__float--1"
+            animate={{ y: [0, -22, 0], rotate: [-16, -6, -16] }}
+            transition={{ duration: 6.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <SatinBow className="h-auto w-full" opacity={0.9} />
+          </motion.div>
+          <motion.div
+            className="hero-dream__float hero-dream__float--2"
+            animate={{ y: [0, 18, 0], rotate: [14, 6, 14] }}
+            transition={{
+              duration: 7.4,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: 0.5,
+            }}
+          >
+            <SatinBow className="h-auto w-full" opacity={0.82} />
+          </motion.div>
+          <motion.div
+            className="hero-dream__float hero-dream__float--3"
+            animate={{ y: [0, -16, 0], x: [0, 12, 0] }}
+            transition={{
+              duration: 6.8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: 1,
+            }}
+          >
+            <SatinBow className="h-auto w-full" opacity={0.78} />
+          </motion.div>
+        </>
+      )}
+
+      {!reduceMotion &&
+        [
+          { t: '14%', l: '8%', d: 0 },
+          { t: '22%', l: '78%', d: 0.7 },
+          { t: '48%', l: '12%', d: 1.4 },
+          { t: '62%', l: '88%', d: 0.3 },
+          { t: '78%', l: '18%', d: 1.1 },
+          { t: '32%', l: '92%', d: 1.8 },
+          { t: '55%', l: '45%', d: 0.5 },
+          { t: '85%', l: '70%', d: 1.3 },
+        ].map((p, i) => (
+          <motion.span
+            key={i}
+            className="hero-dream__spark"
+            style={{ top: p.t, left: p.l }}
+            animate={{ opacity: [0.18, 0.95, 0.18], scale: [0.7, 1.25, 0.7] }}
+            transition={{ duration: 2.6 + i * 0.15, repeat: Infinity, delay: p.d }}
+          />
+        ))}
+
+      {!reduceMotion &&
+        [
+          { t: '18%', l: '42%', d: 0.2, s: 0.85 },
+          { t: '68%', l: '6%', d: 0.9, s: 0.65 },
+          { t: '40%', l: '86%', d: 1.5, s: 0.75 },
+        ].map((p, i) => (
+          <motion.span
+            key={`h-${i}`}
+            className="hero-dream__heart"
+            style={{
+              top: p.t,
+              left: p.l,
+              width: `${p.s}rem`,
+              height: `${p.s}rem`,
+            }}
+            animate={{ y: [0, -12, 0], opacity: [0.3, 0.75, 0.3] }}
+            transition={{
+              duration: 4.4 + i * 0.35,
+              repeat: Infinity,
+              delay: p.d,
+              ease: 'easeInOut',
+            }}
+          >
+            <HeartIcon className="h-full w-full" />
+          </motion.span>
+        ))}
+
+      <div className="hero-dream__glow" />
+    </div>
+  )
+}
+
+function CollageStage({ reduceMotion, parallaxX, parallaxY }) {
+  const mainX = useTransform(parallaxX, (v) => v * 0.35)
+  const mainY = useTransform(parallaxY, (v) => v * 0.25)
+  const sideX = useTransform(parallaxX, (v) => v * 0.55)
+  const sideY = useTransform(parallaxY, (v) => v * 0.4)
+  const frameX = useTransform(parallaxX, (v) => v * -0.4)
+  const frameY = useTransform(parallaxY, (v) => v * -0.3)
+
+  return (
+    <div className="hero-collage">
+      <div className="hero-collage__bloom" aria-hidden />
+
+      <motion.figure
+        className="hero-collage__piece hero-collage__piece--main"
+        style={{ x: mainX, y: mainY, rotate: -3 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 mx-auto max-w-3xl"
+        transition={{ duration: 0.8, delay: 0.18, ease: easeOut }}
+        whileHover={reduceMotion ? undefined : { y: -10, scale: 1.02 }}
       >
-        <p
-          className="font-display text-xs font-semibold uppercase tracking-[0.4em] sm:text-sm"
-          style={{ color: PINK }}
-        >
-          Welcome to
-        </p>
-        <h2
-          className="mt-3 font-logo text-5xl font-bold lowercase tracking-wide sm:text-6xl md:text-7xl"
-          style={{ color: HEADING }}
-        >
-          socutesy
-        </h2>
-        <p
-          className="mt-4 font-display text-xl italic sm:text-2xl"
-          style={{ color: HEADING }}
-        >
-          Personalized gifts made with love ♡
-        </p>
-        <p
-          className="mx-auto mt-6 max-w-2xl text-xs font-medium leading-relaxed tracking-wide sm:text-sm"
-          style={{ color: `${INK}99` }}
-        >
-          Magazines • Newspapers • Frames • Albums • Stickers • Coloring Books •
-          Polaroids
-        </p>
-        <div className="mt-10">
-          <CtaLink>Explore Collection</CtaLink>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
+        <span className="hero-collage__tape" aria-hidden />
+        <img
+          src="/images/magazine-1.png"
+          alt="Custom magazine"
+          loading="eager"
+          decoding="async"
+        />
+        <figcaption className="font-hand">little keepsakes</figcaption>
+      </motion.figure>
 
-function SlideBestsellers() {
-  return (
-    <div className="mx-auto grid min-h-[28rem] max-w-[1200px] items-center gap-8 px-6 py-12 sm:min-h-[32rem] sm:py-16 lg:grid-cols-2 lg:gap-12 lg:px-10">
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative mx-auto aspect-[4/3] w-full max-w-lg"
+      <motion.figure
+        className="hero-collage__piece hero-collage__piece--polaroid"
+        style={{ x: sideX, y: sideY, rotate: 8 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 18, rotate: 14 }}
+        animate={{ opacity: 1, y: 0, rotate: 8 }}
+        transition={{ duration: 0.72, delay: 0.32, ease: easeOut }}
+        whileHover={reduceMotion ? undefined : { y: -8, rotate: 4 }}
       >
-        {mockupImages.map((m) => (
-          <motion.div
-            key={m.label}
-            className={`absolute overflow-hidden rounded-[1.5rem] bg-white shadow-lg shadow-pink-200/40 ring-1 ring-white/80 ${m.className}`}
-            whileHover={{ y: -4 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            <img
-              src={m.src}
-              alt={m.label}
-              className="aspect-square w-full object-cover"
-              loading="lazy"
-            />
-          </motion.div>
-        ))}
-      </motion.div>
+        <img
+          src="/images/polaroids-1.png"
+          alt="Polaroid prints"
+          loading="eager"
+          decoding="async"
+        />
+      </motion.figure>
 
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.08 }}
-        className="text-center lg:text-left"
-      >
-        <h2
-          className="font-display text-4xl font-semibold sm:text-5xl"
-          style={{ color: HEADING }}
-        >
-          Our Best Sellers
-        </h2>
-        <ul className="mt-6 space-y-3">
-          {bestsellers.map((item) => (
-            <li
-              key={item}
-              className="text-sm font-medium sm:text-base"
-              style={{ color: `${INK}cc` }}
-            >
-              <span style={{ color: PINK }}>♡</span> {item}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-10">
-          <CtaLink>Browse Collection</CtaLink>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
-function SlideWhy() {
-  return (
-    <div className="mx-auto flex min-h-[28rem] max-w-[1200px] flex-col items-center justify-center px-6 py-14 sm:min-h-[32rem] sm:py-16">
-      <motion.h2
-        initial={{ opacity: 0, y: 12 }}
+      <motion.figure
+        className="hero-collage__piece hero-collage__piece--frame"
+        style={{ x: frameX, y: frameY, rotate: -7 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="font-display text-center text-4xl font-semibold sm:text-5xl"
-        style={{ color: HEADING }}
+        transition={{ duration: 0.72, delay: 0.42, ease: easeOut }}
+        whileHover={reduceMotion ? undefined : { y: -7 }}
       >
-        Why Choose SoCutesy?
-      </motion.h2>
+        <img
+          src="/images/keepsake-frame-1.png"
+          alt="Keepsake frame"
+          loading="eager"
+          decoding="async"
+        />
+      </motion.figure>
 
-      <div className="mt-10 grid w-full grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-        {whyCards.map((card, i) => (
-          <motion.div
-            key={card.title}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 * i, duration: 0.45 }}
-            className="flex flex-col items-center rounded-[30px] bg-white/80 px-4 py-7 text-center shadow-md shadow-pink-100/50 ring-1 ring-white backdrop-blur-sm"
-          >
-            <span className="mb-3" style={{ color: PINK }}>
-              <WhyIcon type={card.icon} />
-            </span>
-            <p
-              className="font-display text-base font-semibold leading-snug sm:text-lg"
-              style={{ color: HEADING }}
-            >
-              {card.title}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+      <motion.figure
+        className="hero-collage__piece hero-collage__piece--strips"
+        style={{ rotate: -10 }}
+        initial={reduceMotion ? false : { opacity: 0, x: -14 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.68, delay: 0.52, ease: easeOut }}
+        whileHover={reduceMotion ? undefined : { y: -6 }}
+      >
+        <img
+          src="/images/photobooth-strips-cover.png"
+          alt="Photobooth strips"
+          loading="eager"
+          decoding="async"
+        />
+      </motion.figure>
 
-      <div className="mt-10">
-        <CtaLink>Create Yours</CtaLink>
-      </div>
+      <motion.figure
+        className="hero-collage__piece hero-collage__piece--book"
+        style={{ rotate: 6 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.68, delay: 0.6, ease: easeOut }}
+        whileHover={reduceMotion ? undefined : { y: -6 }}
+      >
+        <img
+          src="/images/mini-photobook-1.png"
+          alt="Mini photobook"
+          loading="eager"
+          decoding="async"
+        />
+      </motion.figure>
+
+      <motion.div
+        className="hero-collage__bow"
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.75, rotate: -12 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ delay: 0.75, duration: 0.55, ease: easeOut }}
+        aria-hidden
+      >
+        <SatinBow className="h-12 w-16 drop-shadow-md sm:h-14 sm:w-20" />
+      </motion.div>
     </div>
   )
 }
-
-const slides = [
-  { id: 'welcome', bg: `linear-gradient(165deg, #FCECEF 0%, #F9E0E6 45%, #FCECEF 100%)`, node: <SlideWelcome /> },
-  { id: 'bestsellers', bg: `linear-gradient(180deg, #FDF6F7 0%, #FCECEF 100%)`, node: <SlideBestsellers /> },
-  { id: 'why', bg: `linear-gradient(180deg, #FCECEF 0%, #FFF8FA 50%, #FCECEF 100%)`, node: <SlideWhy /> },
-]
 
 export function HeroBanner() {
-  const [index, setIndex] = useState(0)
+  const reduceMotion = useReducedMotion()
+  const sectionRef = useRef(null)
+  const rawX = useMotionValue(0)
+  const rawY = useMotionValue(0)
+  const parallaxX = useSpring(rawX, { stiffness: 42, damping: 26 })
+  const parallaxY = useSpring(rawY, { stiffness: 42, damping: 26 })
+  const item = heroStagger.item(!!reduceMotion)
+  const container = heroStagger.container(!!reduceMotion)
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length)
-    }, SLIDE_MS)
-    return () => clearInterval(id)
-  }, [])
-
-  const slide = slides[index]
+  const onPointerMove = (e) => {
+    if (reduceMotion || !sectionRef.current) return
+    const r = sectionRef.current.getBoundingClientRect()
+    rawX.set(((e.clientX - r.left) / r.width - 0.5) * 16)
+    rawY.set(((e.clientY - r.top) / r.height - 0.5) * 10)
+  }
 
   return (
     <section
-      className="relative overflow-hidden"
-      aria-roledescription="carousel"
-      aria-label="SoCutesy highlights"
+      ref={sectionRef}
+      className="hero-root"
+      aria-label="Socutesyyy hero"
+      onPointerMove={onPointerMove}
+      onPointerLeave={() => {
+        rawX.set(0)
+        rawY.set(0)
+      }}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={slide.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.65, ease: 'easeInOut' }}
-          style={{ background: slide.bg }}
-          className="w-full"
-        >
-          {slide.node}
+      <DreamAtmosphere reduceMotion={!!reduceMotion} />
+
+      <div className="hero-stage">
+        <motion.div className="hero-copy" {...container}>
+          <motion.p className="hero-copy__eyebrow font-hand" {...item}>
+            <SatinBow className="hero-copy__mini-bow" />
+            ok wait… this is so cuteee
+          </motion.p>
+          <motion.p className="hero-copy__brand" {...item}>
+            socutesyyy
+          </motion.p>
+          <motion.h1 className="hero-copy__title font-display" {...item}>
+            your soft girl era of
+            <br className="hidden sm:block" />{' '}
+            <em className="font-script">pretty things</em>
+          </motion.h1>
+          <motion.p className="hero-copy__sub" {...item}>
+            Polaroids, magazines, frames &amp; keepsakes — handmade gifts for
+            every soft little moment.
+          </motion.p>
+          <motion.div className="hero-copy__actions" {...item}>
+            <motion.a
+              href="#products-top"
+              className="btn-candy font-hero"
+              whileHover={
+                reduceMotion
+                  ? undefined
+                  : { y: -4, scale: 1.04, transition: springSnappy }
+              }
+              whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+            >
+              <span>shop the boutique</span>
+              <motion.span
+                animate={reduceMotion ? undefined : { scale: [1, 1.12, 1] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="inline-flex"
+              >
+                <HeartIcon className="h-4 w-4" />
+              </motion.span>
+            </motion.a>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hero-copy__ig font-hand"
+            >
+              @socutesyyy_
+            </a>
+          </motion.div>
+          <motion.p
+            className="hero-copy__stamp font-hand"
+            initial={reduceMotion ? false : { opacity: 0, rotate: -6, y: 8 }}
+            animate={{ opacity: 1, rotate: -2, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.5, ease: easeOut }}
+          >
+            made with love
+            <HeartIcon className="hero-copy__stamp-heart" />
+          </motion.p>
         </motion.div>
-      </AnimatePresence>
+
+        <CollageStage
+          reduceMotion={!!reduceMotion}
+          parallaxX={parallaxX}
+          parallaxY={parallaxY}
+        />
+      </div>
+
+      <motion.a
+        href="#products-top"
+        className="hero-scroll font-hand"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.85 }}
+        aria-label="Scroll to products"
+      >
+        explore the shop
+        <motion.span
+          animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          ↓
+        </motion.span>
+      </motion.a>
+
+      <div className="hero-edge" aria-hidden>
+        <svg viewBox="0 0 1440 90" preserveAspectRatio="none">
+          <path
+            d="M0,48 C200,90 400,8 720,42 C1040,76 1240,12 1440,48 L1440,90 L0,90 Z"
+            fill="#FFF7FA"
+          />
+        </svg>
+      </div>
     </section>
   )
 }

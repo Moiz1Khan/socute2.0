@@ -34,6 +34,9 @@ export const CONTACT_PRODUCT_SLUGS = new Set([
   'newspaper',
   'mini-album',
   'coloring-book',
+  'cd-journal',
+  'phone-case',
+  'tote-bag',
 ])
 
 /**

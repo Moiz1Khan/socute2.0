@@ -6,7 +6,7 @@ import { useShop } from '../context/ShopContext'
 import { getProductsByCategory } from '../utils/products'
 
 export function ProductCarouselSection({ categoryId, title }) {
-  const { searchQuery, categoryFilter } = useShop()
+  const { searchQuery } = useShop()
   const scrollRef = useRef(null)
 
   const products = useMemo(() => {
@@ -15,9 +15,8 @@ export function ProductCarouselSection({ categoryId, title }) {
       const q = searchQuery.trim().toLowerCase()
       list = list.filter((p) => p.name.toLowerCase().includes(q))
     }
-    if (categoryFilter && categoryFilter !== categoryId) return []
     return list
-  }, [categoryId, searchQuery, categoryFilter])
+  }, [categoryId, searchQuery])
 
   if (products.length === 0) return null
 
@@ -30,7 +29,7 @@ export function ProductCarouselSection({ categoryId, title }) {
   return (
     <section
       id={`section-${categoryId}`}
-      className="border-b border-[#f3f4f6] bg-white py-10 sm:py-14"
+      className="border-b border-[#f5b5cf]/60 bg-gradient-to-b from-[#FFE4EF] via-[#FFF0F6] to-[#FADCE8]/70 py-10 sm:py-14"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <motion.div
@@ -40,8 +39,8 @@ export function ProductCarouselSection({ categoryId, title }) {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8 flex items-center gap-3"
         >
-          <span className="h-6 w-1.5 rounded-full bg-[#be3d6a]" aria-hidden />
-          <h2 className="font-semibold text-2xl text-[#831843] sm:text-3xl">
+          <span className="h-6 w-1.5 rounded-full bg-[#E77DA8]" aria-hidden />
+          <h2 className="font-semibold text-2xl text-[#704456] sm:text-3xl">
             {title}
           </h2>
         </motion.div>
@@ -50,7 +49,7 @@ export function ProductCarouselSection({ categoryId, title }) {
           <button
             type="button"
             onClick={() => scroll(-1)}
-            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] shadow-md transition hover:bg-[#f9fafb] md:flex"
+            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#f5b5cf] bg-[#ffe4ef] text-[#704456] shadow-md transition hover:bg-[#fadce8] md:flex"
             aria-label="Scroll left"
           >
             <IconChevronLeft className="h-5 w-5" />
@@ -58,7 +57,7 @@ export function ProductCarouselSection({ categoryId, title }) {
           <button
             type="button"
             onClick={() => scroll(1)}
-            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] shadow-md transition hover:bg-[#f9fafb] md:flex"
+            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#f5b5cf] bg-[#ffe4ef] text-[#704456] shadow-md transition hover:bg-[#fadce8] md:flex"
             aria-label="Scroll right"
           >
             <IconChevronRight className="h-5 w-5" />

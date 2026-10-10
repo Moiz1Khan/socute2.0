@@ -104,7 +104,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-svh bg-[#fffafc] px-4 py-16 text-center text-sm text-[#6b7280]">
+      <main className="min-h-svh bg-[#fff7fa] px-4 py-16 text-center text-sm text-[#6b7280]">
         Loading…
       </main>
     )
@@ -115,8 +115,8 @@ export default function AdminPage() {
       <main className="mx-auto max-w-lg px-4 py-16">
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Admin is not configured on the server. Set{' '}
-          <code className="rounded bg-white/80 px-1">ADMIN_PASSWORD</code> and{' '}
-          <code className="rounded bg-white/80 px-1">SESSION_SECRET</code> in the
+          <code className="rounded bg-[#fff7fa]/90 px-1">ADMIN_PASSWORD</code> and{' '}
+          <code className="rounded bg-[#fff7fa]/90 px-1">SESSION_SECRET</code> in the
           API environment, then restart.
         </p>
         <Link
@@ -135,7 +135,7 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-[#fce7f3] bg-white p-8 shadow-sm"
+          className="rounded-3xl border border-[#fce7f3] bg-[#fff7fa] p-8 shadow-sm"
         >
           <h1 className="font-semibold text-xl text-[#831843]">Orders admin</h1>
           <p className="mt-2 text-sm text-[#6b7280]">
@@ -176,7 +176,7 @@ export default function AdminPage() {
   const c = detail?.order?.customer
 
   return (
-    <main className="min-h-svh bg-[#fffafc] px-4 py-8 sm:px-6">
+    <main className="min-h-svh bg-[#fff7fa] px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -189,13 +189,13 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-2xl border border-[#fbcfe8] bg-white px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#fdf2f8]"
+              className="rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#ffe4ef]"
             >
               Log out
             </button>
             <Link
               to="/"
-              className="rounded-2xl border border-[#fbcfe8] bg-white px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#fdf2f8]"
+              className="rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#ffe4ef]"
             >
               Shop
             </Link>
@@ -210,7 +210,7 @@ export default function AdminPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
-            <ul className="max-h-[70vh] space-y-2 overflow-y-auto rounded-2xl border border-[#fce7f3] bg-white p-2">
+            <ul className="max-h-[70vh] space-y-2 overflow-y-auto rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-2">
               {orders.length === 0 && (
                 <li className="px-3 py-3 text-sm text-[#9ca3af]">No orders yet.</li>
               )}
@@ -222,7 +222,7 @@ export default function AdminPage() {
                     className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${
                       selectedId === o.id
                         ? 'bg-gradient-to-r from-[#d1567f] to-[#be3d6a] text-white'
-                        : 'text-[#374151] hover:bg-[#fdf2f8]'
+                        : 'text-[#374151] hover:bg-[#ffe4ef]'
                     }`}
                   >
                     <span className="block font-medium truncate">
@@ -253,7 +253,7 @@ export default function AdminPage() {
 
           <div className="lg:col-span-2">
             {!selectedId && (
-              <p className="rounded-2xl border border-[#fce7f3] bg-white p-8 text-center text-sm text-[#9ca3af]">
+              <p className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-8 text-center text-sm text-[#9ca3af]">
                 Select an order to view details and photos.
               </p>
             )}
@@ -262,7 +262,7 @@ export default function AdminPage() {
             )}
             {selectedId && !detailLoading && detail && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-[#fce7f3] bg-white p-6 shadow-sm">
+                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
                     Order
                   </h2>
@@ -296,7 +296,7 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-[#fce7f3] bg-white p-6 shadow-sm">
+                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
                     Customer
                   </h2>
@@ -330,7 +330,7 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-[#fce7f3] bg-white p-6 shadow-sm">
+                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
                     Uploaded photos ({detail.uploads?.length ?? 0})
                   </h2>
@@ -344,7 +344,7 @@ export default function AdminPage() {
                         href={adminFileUrl(detail.order.id, u.stored_filename)}
                         target="_blank"
                         rel="noreferrer"
-                        className="group block overflow-hidden rounded-2xl border border-[#fce7f3] bg-[#fffafc]"
+                        className="group block overflow-hidden rounded-2xl border border-[#fce7f3] bg-[#fff7fa]"
                       >
                         <img
                           src={adminFileUrl(detail.order.id, u.stored_filename)}
