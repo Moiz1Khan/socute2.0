@@ -259,21 +259,19 @@ export function HeroBanner() {
 
       <div className="hero-stage">
         <motion.div className="hero-copy" {...container}>
-          <motion.p className="hero-copy__eyebrow font-hand" {...item}>
+          <motion.p className="hero-copy__eyebrow" {...item}>
             <SatinBow className="hero-copy__mini-bow" />
-            ok wait… this is so cuteee
+            Little things, big feelings
           </motion.p>
           <motion.p className="hero-copy__brand" {...item}>
             socutesyyy
           </motion.p>
           <motion.h1 className="hero-copy__title font-display" {...item}>
-            your soft girl era of
-            <br className="hidden sm:block" />{' '}
-            <em className="font-script">pretty things</em>
+            A Little Something <em className="font-script">Special.</em>
           </motion.h1>
           <motion.p className="hero-copy__sub" {...item}>
-            Polaroids, magazines, frames &amp; keepsakes — handmade gifts for
-            every soft little moment.
+            Thoughtful little finds, personalised keepsakes, and pretty things
+            to make every moment feel special.
           </motion.p>
           <motion.div className="hero-copy__actions" {...item}>
             <motion.a
@@ -286,7 +284,7 @@ export function HeroBanner() {
               }
               whileTap={reduceMotion ? undefined : { scale: 0.96 }}
             >
-              <span>shop the boutique</span>
+              <span>Explore the Collection</span>
               <motion.span
                 animate={reduceMotion ? undefined : { scale: [1, 1.12, 1] }}
                 transition={{
