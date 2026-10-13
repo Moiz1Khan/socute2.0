@@ -4,7 +4,6 @@ import { ReelStudioHero } from '../components/home/ReelStudioHero'
 import { CategoryQuickNav } from '../components/home/CategoryQuickNav'
 import { CategoryShelf } from '../components/home/CategoryShelf'
 import { HowToOrder } from '../components/home/HowToOrder'
-import { DeliveryInfo } from '../components/home/DeliveryInfo'
 import { ReviewsBlock } from '../components/home/ReviewsBlock'
 import { FaqSection } from '../components/FaqSection'
 import { SiteFooter } from '../components/SiteFooter'
@@ -20,9 +19,10 @@ import { categories } from '../utils/products'
 const CATEGORY_TONES = {
   polaroids: 'ivory',
   stationery: 'soft',
-  albums: 'ivory',
-  frames: 'soft',
-  'tote-bags': 'ivory',
+  cards: 'ivory',
+  albums: 'soft',
+  frames: 'ivory',
+  gifting: 'soft',
 }
 
 function scrollToElement(id, behavior = 'smooth') {
@@ -96,7 +96,6 @@ export default function HomePage() {
       ))}
 
       <HowToOrder />
-      <DeliveryInfo />
       <ReviewsBlock />
       <FaqSection />
       <SiteFooter />

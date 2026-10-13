@@ -4,9 +4,10 @@
 export const categories = [
   { id: 'polaroids', title: 'Polaroids & prints' },
   { id: 'stationery', title: 'Printables' },
+  { id: 'cards', title: 'Cards' },
   { id: 'albums', title: 'Magazines & Albums' },
   { id: 'frames', title: 'Frames' },
-  { id: 'tote-bags', title: 'Tote Bags' },
+  { id: 'gifting', title: 'Gifting' },
 ]
 
 export const products = [
@@ -347,7 +348,7 @@ export const products = [
     id: 'mini-bouquet',
     slug: 'mini-bouquet',
     name: 'Mini Bouquet',
-    category: 'frames',
+    category: 'gifting',
     image: '/images/mini-bouquet.png',
     imageAlt:
       'Personalized SoCutesy mini bouquet wrapped in pink paper with Polaroid photos, jewelry, and beauty gifts.',
@@ -368,7 +369,7 @@ export const products = [
     id: 'cd-journal',
     slug: 'cd-journal',
     name: 'CD Journal',
-    category: 'frames',
+    category: 'gifting',
     image:
       'https://res.cloudinary.com/jdnt65gb/image/upload/v1791543524/socutesy/cd/cd-1.jpg',
     images: [
@@ -392,7 +393,7 @@ export const products = [
     id: 'phone-case',
     slug: 'phone-case',
     name: 'Phone Case',
-    category: 'frames',
+    category: 'gifting',
     image:
       'https://res.cloudinary.com/jdnt65gb/image/upload/v1791545264/socutesy/phone-case/phone-case-1.jpg',
     images: [
@@ -415,7 +416,7 @@ export const products = [
     id: 'tote-bag',
     slug: 'tote-bag',
     name: 'Tote Bag',
-    category: 'tote-bags',
+    category: 'gifting',
     image: '/images/tote-bag-1.png?v=2',
     images: ['/images/tote-bag-1.png?v=2', '/images/tote-bag-2.jpg?v=2'],
     imageAlt:
@@ -622,15 +623,28 @@ export const products = [
   {
     id: 'cards',
     slug: 'cards',
-    name: 'Cards',
-    category: 'stationery',
+    name: 'Kraft Card',
+    category: 'cards',
     image: '/images/cards-1.png',
     images: ['/images/cards-1.png', '/images/cards-2.png', '/images/cards-3.png'],
     imageAlt:
       'Custom handmade kraft cards on grass — Galentine scrapbook style with photos, stickers, and envelopes.',
     description:
-      'Handmade-style cards with photos and scrapbook details — birthdays, love notes, Galentine’s.',
+      'Handmade kraft cards with photos and scrapbook details — birthdays, love notes, Galentine’s.',
     price: 600,
+  },
+  {
+    id: 'scrapbook-card',
+    slug: 'scrapbook-card',
+    name: 'Scrapbook Card',
+    category: 'cards',
+    image: '/images/cards-1.jpg',
+    images: ['/images/cards-1.jpg', '/images/cards-3.jpg', '/images/cards-2.jpg'],
+    imageAlt:
+      'Custom handmade scrapbook cards — black pages with photos, stickers, and handwritten notes.',
+    description:
+      'A black-page scrapbook card with your photos, stickers, and handwritten notes — birthdays & bestie gifts.',
+    price: 1500,
   },
   {
     id: 'songbook',

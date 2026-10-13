@@ -167,7 +167,6 @@ export function ReelStudioHero({ onCategory }) {
     <section className="reel-studio" aria-labelledby="reel-studio-heading">
       <div className="reel-studio__shell">
         <div className="reel-studio__copy">
-          <p className="reel-studio__eyebrow">SoCutesy Reel Studio</p>
           <h1 id="reel-studio-heading" className="reel-studio__title font-display">
             Gifts, made personal.
           </h1>

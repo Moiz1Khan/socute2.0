@@ -78,11 +78,6 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link to={{ pathname: '/', hash: '#order-info' }}>
-                  Delivery & Customization
-                </Link>
-              </li>
-              <li>
                 <Link to={{ pathname: '/', hash: '#faqs' }}>FAQs</Link>
               </li>
               <li>

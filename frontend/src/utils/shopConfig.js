@@ -14,7 +14,8 @@ export const CATEGORY_LABELS = {
   stationery: 'Custom Printables',
   albums: 'Custom Magazines & Albums',
   frames: 'Photo Frames',
-  'tote-bags': 'Tote Bags',
+  gifting: 'Gifting',
+  cards: 'Cards',
 }
 
 /** Resolve a category display name without mutating catalog data. */
@@ -30,27 +31,27 @@ export function getCategoryLabel(categoryId) {
  */
 export const HERO_REELS = [
   {
+    id: 'mini-albums',
+    label: 'Photobooth Strips',
+    categoryId: 'albums',
+    // Left phone
+    videoMp4: '/videos/hero/mini-albums.mp4',
+    poster: '/images/hero/reel-mini-albums-poster.jpg',
+  },
+  {
     id: 'magazines',
     label: 'Custom Magazines',
     categoryId: 'albums',
-    // Left phone — from Desktop/videos (Video 1)
+    // Center phone — featured
     videoMp4: '/videos/hero/magazines.mp4',
     poster: '/images/hero/reel-magazines-poster.jpg',
-  },
-  {
-    id: 'mini-albums',
-    label: 'Mini Albums',
-    categoryId: 'albums',
-    // Center phone — from Desktop/videos (Video 2)
-    videoMp4: '/videos/hero/mini-albums.mp4',
-    poster: '/images/hero/reel-mini-albums-poster.jpg',
     featured: true,
   },
   {
     id: 'polaroids',
-    label: 'Polaroids',
-    categoryId: 'polaroids',
-    // Right phone — from Desktop/videos (Video 3)
+    label: 'Mini Bouquet',
+    categoryId: 'gifting',
+    // Right phone
     videoMp4: '/videos/hero/polaroids.mp4',
     poster: '/images/hero/reel-polaroids-poster.jpg',
   },
@@ -128,9 +129,13 @@ export const CATEGORY_VISUALS = {
     image: '/images/keepsake-frame-2.png',
     alt: 'Photo frames',
   },
-  'tote-bags': {
-    image: '/images/tote-bag-1.png?v=2',
-    alt: 'Tote bags',
+  gifting: {
+    image: '/images/mini-bouquet.png',
+    alt: 'Mini bouquet, CD journal, phone case, and tote bag',
+  },
+  cards: {
+    image: '/images/cards-1.png',
+    alt: 'Custom cards',
   },
 }
 
@@ -154,6 +159,7 @@ export const PRODUCT_IMAGE_POSITION = {
   stickers: 'center 28%',
   bookmarks: 'center 20%',
   cards: 'center 28%',
+  'scrapbook-card': 'center 28%',
   'coloring-book': 'center 22%',
   songbook: 'center 26%',
 }
