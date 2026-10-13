@@ -62,11 +62,11 @@ export function ShopSelect({ value, options, onChange, disabled = false }) {
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-3 text-left text-sm font-medium text-[#704456] shadow-sm outline-none transition hover:border-[#f9a8d4] focus-visible:border-[#f9a8d4] focus-visible:ring-2 focus-visible:ring-[#fbcfe8] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-between gap-2 rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-left text-sm font-medium text-[#493c43] shadow-sm outline-none transition hover:border-[#f6b6cc] focus-visible:border-[#f6b6cc] focus-visible:ring-2 focus-visible:ring-[#f6b6cc] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="min-w-0 truncate">{currentLabel}</span>
         <span
-          className={`shrink-0 text-[#a85c7b] transition ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-[#e66f98] transition ${open ? 'rotate-180' : ''}`}
           aria-hidden
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -80,7 +80,7 @@ export function ShopSelect({ value, options, onChange, disabled = false }) {
           id={listId}
           role="listbox"
           aria-labelledby={id}
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-60 overflow-auto rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] py-1 shadow-lg shadow-pink-100/80"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-60 overflow-auto rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] py-1 shadow-lg shadow-[rgba(73,60,67,0.10)]"
         >
           {options.map((opt, i) => {
             const selected = i === safeIndex
@@ -92,8 +92,8 @@ export function ShopSelect({ value, options, onChange, disabled = false }) {
                   aria-selected={selected}
                   className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-medium outline-none transition ${
                     selected
-                      ? 'bg-gradient-to-r from-[#e77da8] to-[#e77da8] text-white shadow-sm shadow-pink-300/35 focus-visible:brightness-105 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40'
-                      : 'text-[#704456] hover:bg-[#fce7f3]/60 focus-visible:bg-[#ffe4ef] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#fbcfe8]'
+                      ? 'bg-gradient-to-r from-[#e66f98] to-[#e66f98] text-white shadow-sm shadow-[rgba(73,60,67,0.10)] focus-visible:brightness-105 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/40'
+                      : 'text-[#493c43] hover:bg-[#fdf0f5]/60 focus-visible:bg-[#fdf0f5] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#f6b6cc]'
                   }`}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pick(i)}

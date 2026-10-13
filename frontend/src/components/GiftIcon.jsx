@@ -1,5 +1,5 @@
 /**
- * Kawaii gift box — matches SoCutesy logo (bubblegum pink box + bow + smile).
+ * Soft gift box mark for brand lockups (no bow decoration).
  */
 export function GiftIcon({ className = 'h-10 w-10 shrink-0' }) {
   return (
@@ -10,34 +10,25 @@ export function GiftIcon({ className = 'h-10 w-10 shrink-0' }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      {/* Bow loops */}
-      <ellipse cx="15" cy="13" rx="8" ry="6" fill="#FF99BB" />
-      <ellipse cx="33" cy="13" rx="8" ry="6" fill="#FF99BB" />
-      <circle cx="24" cy="13" r="4.5" fill="#E0668F" />
-      {/* Lid */}
-      <rect x="6" y="16" width="36" height="11" rx="4" fill="#FFB7CD" />
-      {/* Box */}
-      <rect x="8" y="25" width="32" height="24" rx="4" fill="#FF99BB" />
-      {/* Ribbon vertical */}
-      <rect x="22" y="25" width="4" height="24" rx="1" fill="#FF87B0" opacity="0.45" />
-      {/* Kawaii face */}
+      <rect x="6" y="14" width="36" height="11" rx="4" fill="#fdf0f5" />
+      <rect x="8" y="23" width="32" height="26" rx="4" fill="#f6b6cc" />
       <path
-        d="M15 33 Q18 36 21 33"
-        stroke="#CE6684"
+        d="M15 31 Q18 34 21 31"
+        stroke="#e66f98"
         strokeWidth="1.8"
         strokeLinecap="round"
         fill="none"
       />
       <path
-        d="M27 33 Q30 36 33 33"
-        stroke="#CE6684"
+        d="M27 31 Q30 34 33 31"
+        stroke="#e66f98"
         strokeWidth="1.8"
         strokeLinecap="round"
         fill="none"
       />
       <path
-        d="M17 39 Q24 44 31 39"
-        stroke="#CE6684"
+        d="M17 37 Q24 42 31 37"
+        stroke="#e66f98"
         strokeWidth="1.8"
         strokeLinecap="round"
         fill="none"

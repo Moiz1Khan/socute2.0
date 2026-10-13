@@ -1,10 +1,10 @@
 import { useId, useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { whatsappLink } from '../utils/whatsapp'
-import { SatinBow } from './decor/SatinBow'
+import { EMAIL } from '../utils/shopConfig'
 
 /**
- * Add your Q&As here — { q: string, a: string }
+ * Existing FAQ content — do not invent or alter answers.
  * @type {{ q: string, a: string }[]}
  */
 export const faqs = [
@@ -34,57 +34,27 @@ export const faqs = [
   },
 ]
 
-const WHATSAPP_HREF = whatsappLink('Hi SoCutesy! I have a little question ♡')
-const EMAIL_HREF = 'mailto:socutesy124@gmail.com'
+const WHATSAPP_HREF = whatsappLink('Hi SoCutesy! I have a question about an order.')
+const EMAIL_HREF = `mailto:${EMAIL}`
 
-function HeartIcon({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-    </svg>
-  )
-}
-
-function Sparkle({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
-      <path d="M12 1.5l1.4 7.1L20.5 10 13.4 11.4 12 18.5l-1.4-7.1L3.5 10l7.1-1.4L12 1.5z" />
-    </svg>
-  )
-}
-
-function FaqItem({ item, open, onToggle, index, reduceMotion }) {
+function FaqItem({ item, open, onToggle, reduceMotion }) {
   const panelId = useId()
   const buttonId = useId()
 
   return (
-    <motion.div
-      className={`faq-row ${open ? 'faq-row--open' : ''}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-20px' }}
-      transition={{ delay: Math.min(index * 0.04, 0.2), duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div className={`store-faq__item${open ? ' is-open' : ''}`}>
       <button
         type="button"
         id={buttonId}
         onClick={onToggle}
-        className="faq-row__btn"
+        className="store-faq__btn"
         aria-expanded={open}
         aria-controls={panelId}
       >
-        <span className="faq-row__index font-hand" aria-hidden>
-          {String(index + 1).padStart(2, '0')}
+        <span className="store-faq__q">{item.q}</span>
+        <span className="store-faq__icon" aria-hidden>
+          {open ? '−' : '+'}
         </span>
-        <span className="faq-row__q font-hero">{item.q}</span>
-        <motion.span
-          className={`faq-row__icon ${open ? 'faq-row__icon--open' : ''}`}
-          aria-hidden
-          animate={open ? { rotate: 180 } : { rotate: 0 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {open ? <span className="faq-row__minus" /> : <span className="faq-row__plus" />}
-        </motion.span>
       </button>
 
       <AnimatePresence initial={false}>
@@ -96,14 +66,21 @@ function FaqItem({ item, open, onToggle, index, reduceMotion }) {
             initial={reduceMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : {
+                    height: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+                    opacity: { duration: 0.2 },
+                  }
+            }
+            className="store-faq__panel"
           >
-            <p className="faq-row__a">{item.a}</p>
+            <p className="store-faq__a">{item.a}</p>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }
 
@@ -114,72 +91,41 @@ export function FaqSection() {
   if (!faqs.length) return null
 
   return (
-    <section id="faqs" className="faq-section" aria-labelledby="faq-heading">
-      <div className="faq-section__glow" aria-hidden />
-
-      <div className="faq-editorial">
-        {/* Left: editorial heading + scrapbook note */}
-        <motion.aside
-          className="faq-aside"
-          initial={reduceMotion ? false : { opacity: 0, x: -16 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p className="faq-aside__label font-hand">
-            <Sparkle className="faq-aside__spark" />
-            before you spiral… faqs
-          </p>
-
-          <h2 id="faq-heading" className="faq-aside__title font-display">
-            Frequently Asked Questions
-          </h2>
-
-          <p className="faq-aside__sub">
-            Soft answers about ordering, delivery, and custom gifts — no stress, just cute clarity.
-          </p>
-
-          <div className="faq-sticker" aria-hidden>
-            <SatinBow className="faq-sticker__bow" />
-            <p className="faq-sticker__hand font-hand">we got u bestie ♡</p>
-            <HeartIcon className="faq-sticker__heart" />
+    <section id="faqs" className="store-faq" aria-labelledby="faq-heading">
+      <div className="store-wrap">
+        <header className="store-section-head store-section-head--row">
+          <div>
+            <p className="store-section-head__label">Help</p>
+            <h2 id="faq-heading" className="store-section-head__title">
+              Frequently Asked Questions
+            </h2>
           </div>
-
-          <div className="faq-aside__contact">
+          <div className="store-faq__contact">
             <a
               href={WHATSAPP_HREF}
               target="_blank"
               rel="noopener noreferrer"
-              className="faq-aside__btn font-hero"
+              className="store-faq__chip"
             >
-              still need help?
-              <HeartIcon className="h-3.5 w-3.5" />
+              WhatsApp
             </a>
-            <a href={EMAIL_HREF} className="faq-aside__mail font-hand">
-              email us →
+            <a href={EMAIL_HREF} className="store-faq__chip">
+              Email
             </a>
           </div>
-        </motion.aside>
+        </header>
 
-        {/* Right: elegant accordion list */}
-        <motion.div
-          className="faq-list"
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <div className="store-faq__list">
           {faqs.map((item, i) => (
             <FaqItem
               key={`${i}-${item.q}`}
               item={item}
-              index={i}
               open={openIndex === i}
               reduceMotion={!!reduceMotion}
               onToggle={() => setOpenIndex((prev) => (prev === i ? -1 : i))}
             />
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

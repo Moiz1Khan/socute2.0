@@ -28,6 +28,30 @@ export function IconCart({ className }) {
   )
 }
 
+/** Refined shopping bag for editorial nav */
+export function IconBag({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden
+    >
+      <path
+        d="M6.5 8.5h11l.8 11.2a1.2 1.2 0 01-1.2 1.3H6.9a1.2 1.2 0 01-1.2-1.3L6.5 8.5z"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 8.5V7a3 3 0 016 0v1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 /** Cart + plus — quick add on product cards */
 export function IconCartPlus({ className }) {
   return (
@@ -126,6 +150,95 @@ export function IconCamera({ className }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M4 7h4l2-3h8l2 3h4v12H4V7z" strokeLinejoin="round" />
       <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  )
+}
+
+/** Minimal outline icons for How to Order / Delivery cards */
+export function IconGiftOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M4 11h16v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9z" strokeLinejoin="round" />
+      <path d="M12 11v10M4 11V9a1 1 0 011-1h14a1 1 0 011 1v2" strokeLinecap="round" />
+      <path d="M12 8c-1.8-2.6-4.5-2.8-5.5-1.5S6 9.5 8.5 9H12M12 8c1.8-2.6 4.5-2.8 5.5-1.5S18 9.5 15.5 9H12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconSparkleOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M12 3.5l1.2 4.2L17.5 9l-4.3 1.3L12 14.5l-1.2-4.2L6.5 9l4.3-1.3L12 3.5z" strokeLinejoin="round" />
+      <path d="M18.5 14.5l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3z" strokeLinejoin="round" />
+      <path d="M5.5 15l.5 1.6 1.6.5-1.6.5-.5 1.6-.5-1.6-1.6-.5 1.6-.5.5-1.6z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconCheckoutOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <rect x="3.5" y="6" width="17" height="12" rx="1.5" />
+      <path d="M3.5 10h17" strokeLinecap="round" />
+      <path d="M8 14h3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconCardOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" />
+      <path d="M3 10h18" strokeLinecap="round" />
+      <path d="M7 14h4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconTruckOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M3 7h11v10H3V7z" strokeLinejoin="round" />
+      <path d="M14 10h4.5L21 13v4h-7v-7z" strokeLinejoin="round" />
+      <circle cx="7" cy="18" r="1.5" />
+      <circle cx="17.5" cy="18" r="1.5" />
+    </svg>
+  )
+}
+
+export function IconBookOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M5 5.5A2.5 2.5 0 017.5 3H19v16H7.5A2.5 2.5 0 005 16.5v-11z" strokeLinejoin="round" />
+      <path d="M5 16.5A2.5 2.5 0 017.5 19H19" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconAlbumOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <rect x="4" y="4" width="16" height="16" rx="1.5" />
+      <circle cx="12" cy="12" r="3.25" />
+      <path d="M8 8h.01" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconShieldOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M12 3.5l7 2.5v5.8c0 4.2-2.9 7.2-7 8.7-4.1-1.5-7-4.5-7-8.7V6L12 3.5z" strokeLinejoin="round" />
+      <path d="M9.5 12l1.7 1.7L14.8 10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconPolicyOutline({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M8 4h7l3 3v12a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" strokeLinejoin="round" />
+      <path d="M15 4v3h3M9 11h6M9 14h6M9 17h4" strokeLinecap="round" />
     </svg>
   )
 }

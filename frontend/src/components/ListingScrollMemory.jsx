@@ -1,36 +1,101 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 
-const SCROLL_KEY = 'socutesyyy:listing-scroll-y'
-const PENDING_KEY = 'socutesyyy:listing-scroll-pending'
+const POSITIONS_KEY = 'socutesy:scroll-positions-v2'
 
-function readPendingScroll() {
+function readPositions() {
   try {
-    if (sessionStorage.getItem(PENDING_KEY) !== '1') return null
-    const y = Number(sessionStorage.getItem(SCROLL_KEY))
-    return Number.isFinite(y) ? y : null
+    const raw = sessionStorage.getItem(POSITIONS_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
   } catch {
-    return null
+    return {}
   }
 }
 
-function clearPending() {
+function writeRecord(key, record) {
+  if (!key || !record) return
   try {
-    sessionStorage.removeItem(PENDING_KEY)
+    const all = readPositions()
+    all[key] = record
+    sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(all))
   } catch {
-    /* ignore */
+    /* private mode */
+  }
+}
+
+function readRecord(key) {
+  if (!key) return null
+  const value = readPositions()[key]
+  if (value == null) return null
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return { y: value, anchorId: null, anchorTop: null }
+  }
+  if (typeof value === 'object' && typeof value.y === 'number') {
+    return value
+  }
+  return null
+}
+
+/** True when this history entry has a saved Y that POP restoration will apply. */
+export function hasSavedScrollPosition(locationKey) {
+  return readRecord(locationKey) != null
+}
+
+function instantScroll(y) {
+  const html = document.documentElement
+  const prev = html.style.scrollBehavior
+  html.style.scrollBehavior = 'auto'
+  window.scrollTo(0, Math.max(0, y))
+  html.style.scrollBehavior = prev
+}
+
+function findScrollAnchor() {
+  const sections = document.querySelectorAll(
+    '[id^="section-"], #products-top, #how-to-order, #order-info, #faqs',
+  )
+  let best = null
+  let bestDist = Infinity
+  sections.forEach((el) => {
+    const top = el.getBoundingClientRect().top
+    const dist = Math.abs(top - 96)
+    if (dist < bestDist) {
+      bestDist = dist
+      best = el
+    }
+  })
+  if (!best) return { anchorId: null, anchorTop: null }
+  return {
+    anchorId: best.id,
+    anchorTop: Math.round(best.getBoundingClientRect().top),
+  }
+}
+
+function captureScroll() {
+  const { anchorId, anchorTop } = findScrollAnchor()
+  return {
+    y: Math.round(window.scrollY),
+    anchorId,
+    anchorTop,
   }
 }
 
 /**
- * Homepage listing scroll memory for product detail round-trips.
- * - Saves scroll when clicking a product link
- * - Restores on browser Back / navigate(-1) (POP)
- * - Scrolls to top on PUSH/REPLACE into non-listing routes (and new pages)
+ * Route-aware scroll restoration keyed by React Router location.key.
+ *
+ * Product link clicks often focus the card and the browser scrolls it into view
+ * before React navigates. That would overwrite the real listing Y with a
+ * post-focus Y. We freeze the position on pointerdown/click (capture phase)
+ * and persist that frozen record when the location key changes.
  */
 export function ListingScrollMemory() {
   const location = useLocation()
   const navigationType = useNavigationType()
+  const scrollRef = useRef(captureScroll())
+  const frozenRef = useRef(null)
+  const prevKeyRef = useRef(location.key)
+  const prevPathRef = useRef(location.pathname + location.search + location.hash)
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -38,103 +103,137 @@ export function ListingScrollMemory() {
     }
   }, [])
 
-  // Capture scroll before React Router navigates to a product
   useEffect(() => {
-    const persist = (event) => {
-      if (location.pathname !== '/') return
+    scrollRef.current = captureScroll()
+    const onScroll = () => {
+      // Ignore scroll jitter after a product link has frozen the listing Y
+      if (frozenRef.current) return
+      scrollRef.current = captureScroll()
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const freeze = (event) => {
       const link = event.target?.closest?.('a[href^="/product/"]')
       if (!link) return
-      try {
-        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY))
-        sessionStorage.setItem(PENDING_KEY, '1')
-      } catch {
-        /* private mode */
+      if (frozenRef.current) return
+      const record = {
+        ...captureScroll(),
+        path: prevPathRef.current,
       }
+      frozenRef.current = record
+      scrollRef.current = record
+      writeRecord(prevKeyRef.current, record)
     }
-    document.addEventListener('pointerdown', persist, true)
-    document.addEventListener('click', persist, true)
+    document.addEventListener('pointerdown', freeze, true)
+    document.addEventListener('click', freeze, true)
     return () => {
-      document.removeEventListener('pointerdown', persist, true)
-      document.removeEventListener('click', persist, true)
+      document.removeEventListener('pointerdown', freeze, true)
+      document.removeEventListener('click', freeze, true)
     }
-  }, [location.pathname])
+  }, [])
 
   useLayoutEffect(() => {
-    // Restore listing position after Back from a product
-    if (location.pathname === '/' && navigationType === 'POP') {
-      const y = readPendingScroll()
-      if (y == null) return undefined
+    const html = document.documentElement
+    const prevKey = prevKeyRef.current
+    const nextKey = location.key
+    const nextPath = location.pathname + location.search + location.hash
+
+    if (prevKey !== nextKey) {
+      const record = {
+        ...(frozenRef.current || scrollRef.current),
+        path: prevPathRef.current,
+      }
+      writeRecord(prevKey, record)
+      frozenRef.current = null
+      prevKeyRef.current = nextKey
+      prevPathRef.current = nextPath
+    } else {
+      prevPathRef.current = nextPath
+    }
+
+    if (navigationType === 'POP') {
+      const record = readRecord(nextKey)
+      // Ignore stale "default" key records from a different route (full page loads
+      // reuse React Router's "default" key across documents).
+      if (!record || (record.path && record.path !== nextPath)) {
+        if (!location.hash) {
+          instantScroll(0)
+          scrollRef.current = captureScroll()
+        }
+        return undefined
+      }
 
       const apply = () => {
-        const maxY = Math.max(
-          0,
-          document.documentElement.scrollHeight - window.innerHeight,
-        )
-        window.scrollTo({ top: Math.min(y, maxY), left: 0, behavior: 'auto' })
+        const needed = record.y + window.innerHeight
+        if (html.scrollHeight < needed) {
+          html.style.minHeight = `${needed}px`
+        }
+
+        instantScroll(record.y)
+
+        if (record.anchorId && typeof record.anchorTop === 'number') {
+          const el = document.getElementById(record.anchorId)
+          if (el) {
+            const currentTop = el.getBoundingClientRect().top
+            const delta = currentTop - record.anchorTop
+            if (Math.abs(delta) > 1) {
+              instantScroll(window.scrollY + delta)
+            }
+          }
+        }
+
+        scrollRef.current = {
+          y: Math.round(window.scrollY),
+          anchorId: record.anchorId,
+          anchorTop: record.anchorTop,
+          path: nextPath,
+        }
       }
+
       apply()
 
-      const root = document.documentElement
-      let finished = false
-      const finish = (event) => {
-        if (event?.target?.closest?.('a[href^="/product/"]')) return
-        if (finished) return
-        finished = true
-        clearPending()
-        ro.disconnect()
-        document.removeEventListener('pointerdown', finish, true)
-        document.removeEventListener('wheel', finish, true)
-        document.removeEventListener('touchstart', finish, true)
-      }
-
-      const ro = new ResizeObserver(() => {
+      let frames = 0
+      let rafId = 0
+      const tick = () => {
         apply()
-        if (
-          root.scrollHeight - window.innerHeight >= y - 1 &&
-          Math.abs(window.scrollY - y) <= 2
-        ) {
-          finish()
+        frames += 1
+        if (frames < 45) {
+          rafId = window.requestAnimationFrame(tick)
         }
-      })
-      ro.observe(root)
+      }
+      rafId = window.requestAnimationFrame(tick)
 
-      document.addEventListener('pointerdown', finish, true)
-      document.addEventListener('wheel', finish, true)
-      document.addEventListener('touchstart', finish, true)
+      const ro = new ResizeObserver(() => apply())
+      ro.observe(html)
+
+      const safety = window.setTimeout(() => {
+        apply()
+        if (html.scrollHeight >= record.y + window.innerHeight - 1) {
+          html.style.minHeight = ''
+        }
+        ro.disconnect()
+        window.cancelAnimationFrame(rafId)
+      }, 2000)
 
       return () => {
+        window.clearTimeout(safety)
+        window.cancelAnimationFrame(rafId)
         ro.disconnect()
-        document.removeEventListener('pointerdown', finish, true)
-        document.removeEventListener('wheel', finish, true)
-        document.removeEventListener('touchstart', finish, true)
+        html.style.minHeight = ''
       }
     }
 
-    // New navigations: start at top (nav section jumps use preventScrollReset)
-    if (navigationType !== 'POP' && !location.hash) {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    if (!location.hash) {
+      html.style.minHeight = ''
+      instantScroll(0)
+      scrollRef.current = captureScroll()
     }
 
     return undefined
-  }, [location.key, location.pathname, location.hash, navigationType])
-
-  // After paint: re-assert listing restore once images/layout settle
-  useEffect(() => {
-    if (location.pathname !== '/' || navigationType !== 'POP') return
-    const y = readPendingScroll()
-    if (y == null) return
-
-    const apply = () => {
-      const maxY = Math.max(
-        0,
-        document.documentElement.scrollHeight - window.innerHeight,
-      )
-      window.scrollTo({ top: Math.min(y, maxY), left: 0, behavior: 'auto' })
-    }
-    apply()
-    const id = requestAnimationFrame(apply)
-    return () => cancelAnimationFrame(id)
-  }, [location.key, location.pathname, navigationType])
+  }, [location.key, location.hash, location.pathname, location.search, navigationType])
 
   return null
 }

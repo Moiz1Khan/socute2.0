@@ -1,51 +1,103 @@
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-import { HeroBanner } from '../components/HeroBanner'
-import { PolaroidsSection } from '../components/PolaroidsSection'
-import { PrintablesSection } from '../components/PrintablesSection'
-import { MagazinesAlbumsSection } from '../components/MagazinesAlbumsSection'
-import { FramesSection } from '../components/FramesSection'
-import { ToteBagsSection } from '../components/ToteBagsSection'
-import { ProductCarouselSection } from '../components/ProductCarouselSection'
+import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
+import { ReelStudioHero } from '../components/home/ReelStudioHero'
+import { CategoryQuickNav } from '../components/home/CategoryQuickNav'
+import { CategoryShelf } from '../components/home/CategoryShelf'
+import { HowToOrder } from '../components/home/HowToOrder'
+import { DeliveryInfo } from '../components/home/DeliveryInfo'
+import { ReviewsBlock } from '../components/home/ReviewsBlock'
 import { FaqSection } from '../components/FaqSection'
 import { SiteFooter } from '../components/SiteFooter'
-import { ScallopDivider } from '../components/ScallopDivider'
+import { hasSavedScrollPosition } from '../components/ListingScrollMemory'
+import { useShop } from '../context/ShopContext'
+import { getCategoryLabel } from '../utils/shopConfig'
 import { categories } from '../utils/products'
+
+/**
+ * Soft section rhythm — warm white dominant, blush used sparingly.
+ * Original category order preserved.
+ */
+const CATEGORY_TONES = {
+  polaroids: 'ivory',
+  stationery: 'soft',
+  albums: 'ivory',
+  frames: 'soft',
+  'tote-bags': 'ivory',
+}
+
+function scrollToElement(id, behavior = 'smooth') {
+  const el = document.getElementById(id)
+  if (!el) return
+  const offset = 96
+  const top = el.getBoundingClientRect().top + window.scrollY - offset
+  window.scrollTo({ top: Math.max(0, top), left: 0, behavior })
+}
 
 export default function HomePage() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const navigationType = useNavigationType()
+  const { setCategoryFilter, setFilterLabel, clearProductFilters } = useShop()
 
   useEffect(() => {
-    if (location.hash !== '#faqs') return
-    const el = document.getElementById('faqs')
-    if (!el) return
-    const t = setTimeout(() => {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 80)
-    return () => clearTimeout(t)
-  }, [location.hash])
+    const hash = location.hash?.replace(/^#/, '')
+    if (!hash) return undefined
+
+    // Browser Back/Forward: ListingScrollMemory restores exact Y. Re-scrolling
+    // to the hash section caused the upward jump. Initial loads / direct hash
+    // links still use POP with no saved Y — those should jump to the section.
+    if (navigationType === 'POP' && hasSavedScrollPosition(location.key)) {
+      return undefined
+    }
+
+    const behavior = navigationType === 'POP' ? 'auto' : 'smooth'
+    const run = () => {
+      if (behavior === 'auto') {
+        const html = document.documentElement
+        const prev = html.style.scrollBehavior
+        html.style.scrollBehavior = 'auto'
+        scrollToElement(hash, 'auto')
+        html.style.scrollBehavior = prev
+      } else {
+        scrollToElement(hash, 'smooth')
+      }
+    }
+    run()
+    const t = window.setTimeout(run, navigationType === 'POP' ? 40 : 80)
+    return () => window.clearTimeout(t)
+  }, [location.hash, location.key, navigationType])
+
+  const selectCategory = (id) => {
+    clearProductFilters()
+    setCategoryFilter(id)
+    setFilterLabel(getCategoryLabel(id))
+    navigate(
+      {
+        pathname: '/',
+        hash: `#section-${id}`,
+        search: location.search,
+      },
+      { preventScrollReset: true },
+    )
+  }
 
   return (
-    <div className="bg-[#FFF7FA]">
-      <HeroBanner />
-      <ScallopDivider fill="#FFF7FA" />
-      <div id="products-top" className="relative">
-        {categories.map((c) => {
-          if (c.id === 'polaroids') return <PolaroidsSection key={c.id} />
-          if (c.id === 'stationery') return <PrintablesSection key={c.id} />
-          if (c.id === 'albums') return <MagazinesAlbumsSection key={c.id} />
-          if (c.id === 'frames') return <FramesSection key={c.id} />
-          if (c.id === 'tote-bags') return <ToteBagsSection key={c.id} />
-          return (
-            <ProductCarouselSection
-              key={c.id}
-              categoryId={c.id}
-              title={c.title}
-            />
-          )
-        })}
-      </div>
-      <ScallopDivider fill="#FFF0F6" />
+    <div className="store-home">
+      <ReelStudioHero onCategory={selectCategory} />
+      <CategoryQuickNav onSelect={selectCategory} />
+
+      {categories.map((c, i) => (
+        <CategoryShelf
+          key={c.id}
+          categoryId={c.id}
+          tone={CATEGORY_TONES[c.id] ?? (i % 2 === 0 ? 'ivory' : 'soft')}
+          isFirst={i === 0}
+        />
+      ))}
+
+      <HowToOrder />
+      <DeliveryInfo />
+      <ReviewsBlock />
       <FaqSection />
       <SiteFooter />
     </div>

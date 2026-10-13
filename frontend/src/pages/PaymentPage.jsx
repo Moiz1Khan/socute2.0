@@ -136,11 +136,11 @@ export default function PaymentPage() {
   }
 
   return (
-    <main className="min-h-[70vh] bg-gradient-to-b from-[#fff7fa] via-[#fff0f6] to-[#fadce8] px-4 py-10 sm:px-6 lg:py-14">
+    <main className="min-h-[70vh] bg-[#fffcfd] px-4 py-10 sm:px-6 lg:py-14">
       <div className="mx-auto max-w-2xl">
         <Link
           to={customerPath}
-          className="mb-6 inline-flex text-sm font-semibold text-[#a85c7b] transition hover:text-[#e77da8]"
+          className="mb-6 inline-flex text-sm font-semibold text-[#e66f98] transition hover:text-[#e66f98]"
         >
           ← Back to details
         </Link>
@@ -151,8 +151,8 @@ export default function PaymentPage() {
           transition={{ duration: 0.4 }}
           className="space-y-5"
         >
-          <div className="overflow-hidden rounded-[2rem] border border-[#f5b5cf]/90 bg-[#fff7fa] shadow-xl shadow-[#e77da8]/15">
-            <div className="bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-6 sm:px-8">
+          <div className="overflow-hidden rounded-[2rem] border border-[#f6b6cc]/90 bg-[#fffcfd] shadow-xl shadow-[#e66f98]/15">
+            <div className="bg-[#e66f98] px-6 py-6 sm:px-8">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
                 Step 2 of 2
               </p>
@@ -168,11 +168,11 @@ export default function PaymentPage() {
 
             <div className="space-y-5 px-6 py-6 sm:px-8 sm:py-8">
               {serverOrderId && (
-                <div className="rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+                <div className="rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                     Order reference
                   </p>
-                  <p className="mt-1 font-mono text-lg tracking-wide text-[#704456]">
+                  <p className="mt-1 font-mono text-lg tracking-wide text-[#493c43]">
                     {formatOrderRef(serverOrderId)}
                   </p>
                   <p className="mt-1 text-[11px] text-[#9ca3af]">
@@ -181,42 +181,42 @@ export default function PaymentPage() {
                 </div>
               )}
 
-              <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] px-4 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+              <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                   How payment works
                 </p>
                 <ul className="mt-3 space-y-2.5 text-sm text-[#4b5563]">
                   <li className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdeef4] text-xs font-bold text-[#e77da8]">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0f5] text-xs font-bold text-[#e66f98]">
                       1
                     </span>
                     <span>
                       Pay{' '}
-                      <strong className="font-semibold text-[#704456]">
+                      <strong className="font-semibold text-[#493c43]">
                         50% advance
                       </strong>{' '}
                       now to confirm your order.
                     </span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdeef4] text-xs font-bold text-[#e77da8]">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0f5] text-xs font-bold text-[#e66f98]">
                       2
                     </span>
                     <span>
                       Remaining{' '}
-                      <strong className="font-semibold text-[#704456]">
+                      <strong className="font-semibold text-[#493c43]">
                         50% is due on delivery
                       </strong>
                       .
                     </span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdeef4] text-xs font-bold text-[#e77da8]">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdf0f5] text-xs font-bold text-[#e66f98]">
                       3
                     </span>
                     <span>
                       Payment is{' '}
-                      <strong className="font-semibold text-[#704456]">
+                      <strong className="font-semibold text-[#493c43]">
                         fully online via JazzCash
                       </strong>
                       . We do not offer cash on delivery.
@@ -225,13 +225,13 @@ export default function PaymentPage() {
                 </ul>
               </div>
 
-              <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] px-4 py-4 text-sm">
+              <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] px-4 py-4 text-sm">
                 {isCartCheckout && cartSnapshot ? (
                   <>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                       Cart items
                     </p>
-                    <ul className="mt-2 space-y-2 border-b border-[#fce7f3] pb-3">
+                    <ul className="mt-2 space-y-2 border-b border-[#fdf0f5] pb-3">
                       {cartSnapshot.map((line) => (
                         <li
                           key={line.lineId}
@@ -242,7 +242,7 @@ export default function PaymentPage() {
                             {line.summary ? ` (${line.summary})` : ''} ×{' '}
                             {line.qty}
                           </span>
-                          <span className="shrink-0 tabular-nums text-[#704456]">
+                          <span className="shrink-0 tabular-nums text-[#493c43]">
                             RS. {(line.unitPrice * line.qty).toLocaleString()}
                           </span>
                         </li>
@@ -250,7 +250,7 @@ export default function PaymentPage() {
                     </ul>
                     <div className="mt-3 flex justify-between gap-4 font-medium">
                       <span className="text-[#6b7280]">Subtotal</span>
-                      <span className="tabular-nums text-[#704456]">
+                      <span className="tabular-nums text-[#493c43]">
                         RS. {lineSubtotal.toLocaleString()}
                       </span>
                     </div>
@@ -262,7 +262,7 @@ export default function PaymentPage() {
                         {productName || 'Subtotal'}
                         {qty > 1 ? ` (${qty}×)` : ''}
                       </span>
-                      <span className="font-medium tabular-nums text-[#704456]">
+                      <span className="font-medium tabular-nums text-[#493c43]">
                         RS. {lineSubtotal.toLocaleString()}
                       </span>
                     </div>
@@ -278,21 +278,21 @@ export default function PaymentPage() {
                 )}
                 <div className="mt-2 flex justify-between gap-4">
                   <span className="text-[#6b7280]">Delivery</span>
-                  <span className="font-medium tabular-nums text-[#704456]">
+                  <span className="font-medium tabular-nums text-[#493c43]">
                     {includeDelivery
                       ? `RS. ${DELIVERY_CHARGE_RS.toLocaleString()}`
                       : '—'}
                   </span>
                 </div>
-                <div className="mt-3 flex justify-between gap-4 border-t border-[#fce7f3] pt-3 font-medium">
+                <div className="mt-3 flex justify-between gap-4 border-t border-[#fdf0f5] pt-3 font-medium">
                   <span className="text-[#6b7280]">Order total</span>
-                  <span className="tabular-nums text-[#704456]">
+                  <span className="tabular-nums text-[#493c43]">
                     RS. {orderTotal.toLocaleString()}
                   </span>
                 </div>
-                <div className="mt-3 flex justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#ffe4ef] to-[#ffe4ef] px-4 py-3 font-semibold">
-                  <span className="text-[#a85c7b]">Pay now (50% advance)</span>
-                  <span className="tabular-nums text-[#e77da8]">
+                <div className="mt-3 flex justify-between gap-4 rounded-2xl bg-gradient-to-r from-[#fdf0f5] to-[#fdf0f5] px-4 py-3 font-semibold">
+                  <span className="text-[#e66f98]">Pay now (50% advance)</span>
+                  <span className="tabular-nums text-[#e66f98]">
                     RS. {advance.toLocaleString()}
                   </span>
                 </div>
@@ -306,48 +306,48 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[#f5d0e6]/80 bg-[#fff7fa] p-6 shadow-lg shadow-pink-100/40 sm:p-8">
-            <h2 className="font-display text-xl font-semibold text-[#704456]">
+          <div className="rounded-[2rem] border border-[#f6b6cc]/80 bg-[#fffcfd] p-6 shadow-lg shadow-[rgba(73,60,67,0.08)] sm:p-8">
+            <h2 className="font-display text-xl font-semibold text-[#493c43]">
               JazzCash details
             </h2>
             <p className="mt-2 text-sm text-[#6b7280]">
               Send the{' '}
-              <span className="font-semibold text-[#704456]">
+              <span className="font-semibold text-[#493c43]">
                 50% advance (RS. {advance.toLocaleString()})
               </span>{' '}
               to this account.
             </p>
 
             <div className="mt-5 space-y-3">
-              <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] px-4 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+              <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                   Method
                 </p>
-                <p className="mt-1 text-base font-semibold text-[#704456]">
+                <p className="mt-1 text-base font-semibold text-[#493c43]">
                   {PAYMENT_ACCOUNT.method}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] px-4 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+              <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                   Account number
                 </p>
-                <p className="mt-1 font-mono text-lg tracking-wide text-[#704456]">
+                <p className="mt-1 font-mono text-lg tracking-wide text-[#493c43]">
                   {PAYMENT_ACCOUNT.number}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] px-4 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a85c7b]">
+              <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] px-4 py-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#e66f98]">
                   Account name
                 </p>
-                <p className="mt-1 text-base font-semibold text-[#704456]">
+                <p className="mt-1 text-base font-semibold text-[#493c43]">
                   {PAYMENT_ACCOUNT.name}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[#f5d0e6]/80 bg-[#fff7fa] p-6 shadow-lg shadow-pink-100/40 sm:p-8">
-            <h2 className="font-display text-xl font-semibold text-[#704456]">
+          <div className="rounded-[2rem] border border-[#f6b6cc]/80 bg-[#fffcfd] p-6 shadow-lg shadow-[rgba(73,60,67,0.08)] sm:p-8">
+            <h2 className="font-display text-xl font-semibold text-[#493c43]">
               Payment screenshot
             </h2>
             <p className="mt-2 text-sm text-[#6b7280]">
@@ -357,11 +357,11 @@ export default function PaymentPage() {
 
             <div className="mt-5">
               {paymentPreview ? (
-                <div className="relative overflow-hidden rounded-2xl border border-[#fce7f3] bg-[#fff7fa]">
+                <div className="relative overflow-hidden rounded-2xl border border-[#fdf0f5] bg-[#fffcfd]">
                   <img
                     src={paymentPreview}
                     alt="Payment screenshot preview"
-                    className="max-h-64 w-full object-contain bg-[#fff7fa]"
+                    className="max-h-64 w-full object-contain bg-[#fffcfd]"
                   />
                   <button
                     type="button"
@@ -372,9 +372,9 @@ export default function PaymentPage() {
                   </button>
                 </div>
               ) : (
-                <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#fbcfe8] bg-[#fff7fa] px-4 py-10 transition hover:border-[#f9a8d4] hover:bg-[#ffe4ef]">
-                  <IconCamera className="h-9 w-9 text-[#f9a8d4]" />
-                  <span className="mt-2 text-sm font-semibold text-[#704456]">
+                <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#f6b6cc] bg-[#fffcfd] px-4 py-10 transition hover:border-[#f6b6cc] hover:bg-[#fdf0f5]">
+                  <IconCamera className="h-9 w-9 text-[#f6b6cc]" />
+                  <span className="mt-2 text-sm font-semibold text-[#493c43]">
                     Tap to upload payment screenshot
                   </span>
                   <span className="mt-1 text-xs text-[#9ca3af]">PNG, JPG</span>
@@ -390,7 +390,7 @@ export default function PaymentPage() {
 
             {confirmError && (
               <p
-                className="mt-4 rounded-2xl border border-[#fecaca] bg-[#fef2f8] px-4 py-3 text-sm text-[#b91c1c]"
+                className="mt-4 rounded-2xl border border-[#f6b6cc] bg-[#fdf0f5] px-4 py-3 text-sm text-[#493c43]"
                 role="alert"
               >
                 {confirmError}
@@ -401,12 +401,12 @@ export default function PaymentPage() {
               type="button"
               disabled={!paymentFile || !serverOrderId || confirming}
               onClick={handleConfirm}
-              className="mt-6 w-full rounded-2xl bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 w-full rounded-2xl bg-[#e66f98] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {confirming ? 'Confirming order…' : 'Confirm order'}
             </button>
             {!serverOrderId && (
-              <p className="mt-3 text-xs text-[#a85c7b]">
+              <p className="mt-3 text-xs text-[#e66f98]">
                 Order was not saved. Go back to details and try again.
               </p>
             )}
@@ -424,9 +424,9 @@ export default function PaymentPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[#f5d0e6]/80 bg-[#fff7fa] shadow-2xl shadow-pink-200/50"
+            className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[#f6b6cc]/80 bg-[#fffcfd] shadow-2xl shadow-[rgba(73,60,67,0.12)]"
           >
-            <div className="bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-5">
+            <div className="bg-[#e66f98] px-6 py-5">
               <h2
                 id="order-confirmed-title"
                 className="font-display text-2xl font-semibold text-white"
@@ -435,13 +435,13 @@ export default function PaymentPage() {
               </h2>
             </div>
             <div className="px-6 py-6">
-              <p className="text-sm leading-relaxed text-[#704456]">
+              <p className="text-sm leading-relaxed text-[#493c43]">
                 You will be notified shortly after verification.
               </p>
               {serverOrderId && (
                 <p className="mt-3 text-xs text-[#6b7280]">
                   Order ref:{' '}
-                  <span className="font-mono font-semibold text-[#704456]">
+                  <span className="font-mono font-semibold text-[#493c43]">
                     {formatOrderRef(serverOrderId)}
                   </span>
                 </p>
@@ -449,7 +449,7 @@ export default function PaymentPage() {
               <button
                 type="button"
                 onClick={finishAndGoHome}
-                className="mt-6 w-full rounded-2xl bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:brightness-105"
+                className="mt-6 w-full rounded-2xl bg-[#e66f98] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105"
               >
                 Back to shop
               </button>

@@ -26,7 +26,7 @@ export function KeepsakeCustomize({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-sm font-semibold text-[#a85c7b]">Choose template</p>
+        <p className="text-sm font-semibold text-[#e66f98]">Choose template</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {designs.map((d, i) => {
             const active = selection.designIndex === i
@@ -39,11 +39,11 @@ export function KeepsakeCustomize({
                 }
                 className={`overflow-hidden rounded-2xl border text-left transition ${
                   active
-                    ? 'border-[#E77DA8] ring-2 ring-[#E77DA8]/30'
-                    : 'border-[#fce7f3] hover:border-[#f9a8d4]'
+                    ? 'border-[#e66f98] ring-2 ring-[#e66f98]/30'
+                    : 'border-[#fdf0f5] hover:border-[#f6b6cc]'
                 }`}
               >
-                <div className="aspect-square bg-[#ffe4ef]">
+                <div className="aspect-square bg-[#fdf0f5]">
                   {d.image ? (
                     <img
                       src={d.image}
@@ -62,7 +62,7 @@ export function KeepsakeCustomize({
                 </div>
                 <p
                   className={`px-2 py-2 text-[11px] font-semibold leading-snug ${
-                    active ? 'text-[#E77DA8]' : 'text-[#704456]'
+                    active ? 'text-[#e66f98]' : 'text-[#493c43]'
                   }`}
                 >
                   {d.label}
@@ -75,7 +75,7 @@ export function KeepsakeCustomize({
 
       {showSizePicker ? (
         <div>
-          <p className="text-sm font-semibold text-[#a85c7b]">Size</p>
+          <p className="text-sm font-semibold text-[#e66f98]">Size</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {sizes.map((s, i) => {
               const active = selection.sizeIndex === i
@@ -88,8 +88,8 @@ export function KeepsakeCustomize({
                   }
                   className={`rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
                     active
-                      ? 'border-[#E77DA8] bg-[#E77DA8] text-white'
-                      : 'border-[#fbcfe8] bg-[#fff7fa] text-[#704456] hover:bg-[#ffe4ef]'
+                      ? 'border-[#e66f98] bg-[#e66f98] text-white'
+                      : 'border-[#f6b6cc] bg-[#fffcfd] text-[#493c43] hover:bg-[#fdf0f5]'
                   }`}
                 >
                   {s.size}
@@ -104,17 +104,17 @@ export function KeepsakeCustomize({
       ) : singleSize ? (
         <p className="text-xs text-[#6b7280]">
           Size:{' '}
-          <span className="font-semibold text-[#704456]">{singleSize.size}</span>
+          <span className="font-semibold text-[#493c43]">{singleSize.size}</span>
           {' · '}
-          <span className="font-semibold text-[#704456]">
+          <span className="font-semibold text-[#493c43]">
             RS. {singleSize.price.toLocaleString()}
           </span>
         </p>
       ) : null}
 
       {isCustom ? (
-        <div className="rounded-2xl border border-dashed border-[#f9a8d4] bg-[#fff7fa] px-4 py-5 text-center">
-          <p className="text-sm font-semibold text-[#704456]">
+        <div className="rounded-2xl border border-dashed border-[#f6b6cc] bg-[#fffcfd] px-4 py-5 text-center">
+          <p className="text-sm font-semibold text-[#493c43]">
             Custom template
           </p>
           <p className="mt-2 text-xs leading-relaxed text-[#6b7280]">
@@ -125,7 +125,7 @@ export function KeepsakeCustomize({
             href={customWhatsAppHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#d1567f] to-[#E77DA8] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-300/40 transition hover:brightness-105"
+            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-[#e66f98] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105"
           >
             Send template on WhatsApp
           </a>
@@ -134,7 +134,7 @@ export function KeepsakeCustomize({
         <>
           {(design.fields?.length > 0 || design.fieldHint) && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-[#a85c7b]">
+              <p className="text-sm font-semibold text-[#e66f98]">
                 Required text
               </p>
               {design.fieldHint && (
@@ -143,11 +143,11 @@ export function KeepsakeCustomize({
               {design.fields?.map((field) => (
                 <label
                   key={field.key}
-                  className="block text-xs font-medium text-[#704456]"
+                  className="block text-xs font-medium text-[#493c43]"
                 >
                   {field.label}
                   {field.required ? (
-                    <span className="text-[#E77DA8]"> *</span>
+                    <span className="text-[#e66f98]"> *</span>
                   ) : (
                     <span className="font-normal text-[#9ca3af]"> (optional)</span>
                   )}
@@ -157,7 +157,7 @@ export function KeepsakeCustomize({
                       value={fieldValues[field.key] ?? ''}
                       onChange={(e) => onFieldChange(field.key, e.target.value)}
                       placeholder={field.placeholder}
-                      className="mt-1 w-full rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-3 text-sm font-medium text-[#704456] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f9a8d4] focus:ring-2 focus:ring-[#fbcfe8]"
+                      className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
                     />
                   ) : (
                     <input
@@ -165,7 +165,7 @@ export function KeepsakeCustomize({
                       value={fieldValues[field.key] ?? ''}
                       onChange={(e) => onFieldChange(field.key, e.target.value)}
                       placeholder={field.placeholder}
-                      className="mt-1 w-full rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-3 text-sm font-medium text-[#704456] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f9a8d4] focus:ring-2 focus:ring-[#fbcfe8]"
+                      className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
                     />
                   )}
                 </label>

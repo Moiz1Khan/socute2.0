@@ -6,7 +6,6 @@ import { AnnouncementBar } from './components/AnnouncementBar'
 import { ShopHeader } from './components/ShopHeader'
 import { CartDelight } from './components/CartDelight'
 import { ListingScrollMemory } from './components/ListingScrollMemory'
-import { BoutiqueCursor } from './components/BoutiqueCursor'
 import HomePage from './pages/HomePage'
 import ProductDetail from './pages/ProductDetail'
 import CustomizePlaceholder from './pages/CustomizePlaceholder'
@@ -21,7 +20,6 @@ function AppShell() {
       <CartProvider>
         <OrderFlowProvider>
           <div className="boutique-shell relative min-h-svh">
-            <BoutiqueCursor />
             <ListingScrollMemory />
             <AnnouncementBar />
             <ShopHeader />

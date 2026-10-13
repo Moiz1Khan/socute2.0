@@ -164,11 +164,11 @@ export default function CustomerFormPage() {
   const headingContext = isCartCheckout ? 'your cart order' : product.name
 
   return (
-    <main className="min-h-[70vh] bg-gradient-to-b from-[#fff7fa] via-[#fff0f6] to-[#fadce8] px-4 py-10 sm:px-6 lg:py-14">
+    <main className="min-h-[70vh] bg-[#fffcfd] px-4 py-10 sm:px-6 lg:py-14">
       <div className="mx-auto max-w-2xl">
         <Link
           to={backHref}
-          className="mb-6 inline-flex text-sm font-semibold text-[#a85c7b] transition hover:text-[#e77da8]"
+          className="mb-6 inline-flex text-sm font-semibold text-[#e66f98] transition hover:text-[#e66f98]"
         >
           {backLabel}
         </Link>
@@ -177,25 +177,25 @@ export default function CustomerFormPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="overflow-hidden rounded-[2rem] border border-[#f5b5cf]/90 bg-[#fff7fa] shadow-xl shadow-[#e77da8]/15"
+          className="overflow-hidden rounded-[2rem] border border-[#f6b6cc]/70 bg-[#fffcfd] shadow-xl shadow-[rgba(73,60,67,0.08)]"
         >
-          <div className="bg-gradient-to-r from-[#f5b5cf] via-[#e77da8] to-[#d46596] px-6 py-6 sm:px-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
+          <div className="border-b border-[#f6b6cc]/40 bg-[#fdf0f5] px-6 py-6 sm:px-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e66f98]">
               Step 1 of 2
             </p>
-            <h1 className="mt-1 font-display text-3xl font-semibold text-white sm:text-4xl">
+            <h1 className="mt-1 font-display text-3xl font-semibold text-[#493c43] sm:text-4xl">
               Your details
             </h1>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-white/90">
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-[#755f69]">
               We need this to confirm{' '}
-              <span className="font-semibold text-white">{headingContext}</span>.
+              <span className="font-semibold text-[#493c43]">{headingContext}</span>.
             </p>
           </div>
 
           <div className="space-y-6 px-6 py-6 sm:px-8 sm:py-8">
             {saveError && (
               <p
-                className="rounded-2xl border border-[#fecaca] bg-[#fef2f8] px-4 py-3 text-sm text-[#b91c1c]"
+                className="rounded-2xl border border-[#f6b6cc] bg-[#fdf0f5] px-4 py-3 text-sm text-[#493c43]"
                 role="alert"
               >
                 {saveError}

@@ -104,7 +104,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-svh bg-[#fff7fa] px-4 py-16 text-center text-sm text-[#6b7280]">
+      <main className="min-h-svh bg-[#fffcfd] px-4 py-16 text-center text-sm text-[#6b7280]">
         Loading…
       </main>
     )
@@ -115,8 +115,8 @@ export default function AdminPage() {
       <main className="mx-auto max-w-lg px-4 py-16">
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Admin is not configured on the server. Set{' '}
-          <code className="rounded bg-[#fff7fa]/90 px-1">ADMIN_PASSWORD</code> and{' '}
-          <code className="rounded bg-[#fff7fa]/90 px-1">SESSION_SECRET</code> in the
+          <code className="rounded bg-[#fffcfd]/90 px-1">ADMIN_PASSWORD</code> and{' '}
+          <code className="rounded bg-[#fffcfd]/90 px-1">SESSION_SECRET</code> in the
           API environment, then restart.
         </p>
         <Link
@@ -135,7 +135,7 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-[#fce7f3] bg-[#fff7fa] p-8 shadow-sm"
+          className="rounded-3xl border border-[#fdf0f5] bg-[#fffcfd] p-8 shadow-sm"
         >
           <h1 className="font-semibold text-xl text-[#831843]">Orders admin</h1>
           <p className="mt-2 text-sm text-[#6b7280]">
@@ -143,7 +143,7 @@ export default function AdminPage() {
           </p>
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             {loginError && (
-              <p className="text-sm text-[#b91c1c]" role="alert">
+              <p className="text-sm text-[#493c43]" role="alert">
                 {loginError}
               </p>
             )}
@@ -152,12 +152,12 @@ export default function AdminPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-[#fbcfe8] px-4 py-3 text-sm text-[#831843] outline-none focus:border-[#f9a8d4] focus:ring-2 focus:ring-[#fbcfe8]"
+              className="w-full rounded-2xl border border-[#f6b6cc] px-4 py-3 text-sm text-[#831843] outline-none focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
               placeholder="Password"
             />
             <button
               type="submit"
-              className="w-full rounded-2xl bg-gradient-to-r from-[#d1567f] to-[#be3d6a] py-3 text-sm font-semibold text-white shadow-lg shadow-pink-300/40"
+              className="w-full rounded-2xl bg-gradient-to-r from-[#e66f98] to-[#e66f98] py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)]"
             >
               Sign in
             </button>
@@ -176,7 +176,7 @@ export default function AdminPage() {
   const c = detail?.order?.customer
 
   return (
-    <main className="min-h-svh bg-[#fff7fa] px-4 py-8 sm:px-6">
+    <main className="min-h-svh bg-[#fffcfd] px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -189,13 +189,13 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#ffe4ef]"
+              className="rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-2 text-sm font-semibold text-[#e66f98] hover:bg-[#fdf0f5]"
             >
               Log out
             </button>
             <Link
               to="/"
-              className="rounded-2xl border border-[#fbcfe8] bg-[#fff7fa] px-4 py-2 text-sm font-semibold text-[#db2777] hover:bg-[#ffe4ef]"
+              className="rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-2 text-sm font-semibold text-[#e66f98] hover:bg-[#fdf0f5]"
             >
               Shop
             </Link>
@@ -203,14 +203,14 @@ export default function AdminPage() {
         </div>
 
         {listError && (
-          <p className="mt-4 text-sm text-[#b91c1c]" role="alert">
+          <p className="mt-4 text-sm text-[#493c43]" role="alert">
             {listError}
           </p>
         )}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
-            <ul className="max-h-[70vh] space-y-2 overflow-y-auto rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-2">
+            <ul className="max-h-[70vh] space-y-2 overflow-y-auto rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-2">
               {orders.length === 0 && (
                 <li className="px-3 py-3 text-sm text-[#9ca3af]">No orders yet.</li>
               )}
@@ -221,8 +221,8 @@ export default function AdminPage() {
                     onClick={() => setSelectedId(o.id)}
                     className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition ${
                       selectedId === o.id
-                        ? 'bg-gradient-to-r from-[#d1567f] to-[#be3d6a] text-white'
-                        : 'text-[#374151] hover:bg-[#ffe4ef]'
+                        ? 'bg-gradient-to-r from-[#e66f98] to-[#e66f98] text-white'
+                        : 'text-[#374151] hover:bg-[#fdf0f5]'
                     }`}
                   >
                     <span className="block font-medium truncate">
@@ -253,7 +253,7 @@ export default function AdminPage() {
 
           <div className="lg:col-span-2">
             {!selectedId && (
-              <p className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-8 text-center text-sm text-[#9ca3af]">
+              <p className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-8 text-center text-sm text-[#9ca3af]">
                 Select an order to view details and photos.
               </p>
             )}
@@ -262,8 +262,8 @@ export default function AdminPage() {
             )}
             {selectedId && !detailLoading && detail && (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
+                <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
                     Order
                   </h2>
                   <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
@@ -296,8 +296,8 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
+                <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
                     Customer
                   </h2>
                   {c && (
@@ -308,7 +308,7 @@ export default function AdminPage() {
                       </li>
                       <li>
                         <span className="text-[#9ca3af]">Phone </span>
-                        <a className="text-[#db2777] underline" href={`tel:${c.phone}`}>
+                        <a className="text-[#e66f98] underline" href={`tel:${c.phone}`}>
                           {c.phone}
                         </a>
                       </li>
@@ -330,8 +330,8 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-[#fce7f3] bg-[#fff7fa] p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#be185d]">
+                <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
                     Uploaded photos ({detail.uploads?.length ?? 0})
                   </h2>
                   {!detail.uploads?.length && (
@@ -344,7 +344,7 @@ export default function AdminPage() {
                         href={adminFileUrl(detail.order.id, u.stored_filename)}
                         target="_blank"
                         rel="noreferrer"
-                        className="group block overflow-hidden rounded-2xl border border-[#fce7f3] bg-[#fff7fa]"
+                        className="group block overflow-hidden rounded-2xl border border-[#fdf0f5] bg-[#fffcfd]"
                       >
                         <img
                           src={adminFileUrl(detail.order.id, u.stored_filename)}

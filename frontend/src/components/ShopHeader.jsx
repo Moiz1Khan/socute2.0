@@ -1,162 +1,298 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { GiftIcon } from './GiftIcon'
-import { SatinBow } from './decor/SatinBow'
-
-const MotionLink = motion.create(Link)
-import { IconCart, IconMenu, IconClose } from './icons'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { IconBag, IconMenu, IconClose, IconSearch } from './icons'
 import { useCart } from '../context/CartContext'
 import { useShop } from '../context/ShopContext'
 import { categories } from '../utils/products'
+import { getCategoryLabel } from '../utils/shopConfig'
 import { useOrderFlow } from '../context/OrderFlowContext'
+import { whatsappLink } from '../utils/whatsapp'
+
+const CONTACT_HREF = whatsappLink('Hi SoCutesy! I have a question.')
 
 export function ShopHeader() {
   const { count } = useCart()
-  const { categoryFilter, setCategoryFilter } = useShop()
+  const {
+    categoryFilter,
+    searchQuery,
+    setSearchQuery,
+    clearSearch,
+    setCategoryFilter,
+    setSlugFilter,
+    setFilterLabel,
+    clearProductFilters,
+  } = useShop()
   const navigate = useNavigate()
+  const location = useLocation()
+  const reduceMotion = useReducedMotion()
   const [cartOpen, setCartOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [shopOpen, setShopOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const searchRef = useRef(null)
+  const shopRef = useRef(null)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 8)
+        ticking = false
+      })
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const scrollToId = (id, top = false) => {
-    setTimeout(() => {
-      if (top) {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      } else {
-        document
-          .getElementById(id)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }, 60)
+  useEffect(() => {
+    if (!mobileNavOpen) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileNavOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileNavOpen])
+
+  useEffect(() => {
+    if (!searchOpen) return
+    searchRef.current?.focus()
+  }, [searchOpen])
+
+  useEffect(() => {
+    if (!shopOpen) return
+    const onDoc = (e) => {
+      if (!shopRef.current?.contains(e.target)) setShopOpen(false)
+    }
+    document.addEventListener('pointerdown', onDoc)
+    return () => document.removeEventListener('pointerdown', onDoc)
+  }, [shopOpen])
+
+  const goListing = (hash = '', { clearFilters = false, replace = false } = {}) => {
+    if (clearFilters) clearProductFilters()
+    setMobileNavOpen(false)
+    setShopOpen(false)
+    const normalized = hash
+      ? hash.startsWith('#')
+        ? hash
+        : `#${hash}`
+      : ''
+    navigate(
+      {
+        pathname: '/',
+        search: location.search,
+        hash: normalized,
+      },
+      { preventScrollReset: true, replace },
+    )
   }
 
   const goHome = () => {
-    setCategoryFilter(null)
+    clearProductFilters()
+    clearSearch()
     setMobileNavOpen(false)
-    // Keep RR from jumping to top before our intentional scroll
-    navigate('/', { preventScrollReset: true })
-    scrollToId(null, true)
+    setShopOpen(false)
+    navigate({ pathname: '/', search: '', hash: '' })
   }
 
   const goShopAll = () => {
-    setCategoryFilter(null)
-    setMobileNavOpen(false)
-    navigate('/', { preventScrollReset: true })
-    scrollToId('products-top')
+    goListing('products-top', { clearFilters: true })
   }
 
   const goCategory = (id) => {
+    clearProductFilters()
     setCategoryFilter(id)
-    setMobileNavOpen(false)
-    navigate('/', { preventScrollReset: true })
-    scrollToId(`section-${id}`)
+    setFilterLabel(getCategoryLabel(id))
+    goListing(`section-${id}`)
   }
 
-  const navLinks = [
-    { key: 'home', label: 'Home', onClick: goHome, active: false },
-    {
-      key: 'all',
-      label: 'Shop All',
-      onClick: goShopAll,
-      active: categoryFilter == null,
-    },
+  const goCategories = () => {
+    goListing('products-top')
+  }
+
+  const openSearch = () => {
+    setSearchOpen(true)
+    setCartOpen(false)
+  }
+
+  const submitSearch = (e) => {
+    e?.preventDefault()
+    setSlugFilter(null)
+    setMobileNavOpen(false)
+    const trimmed = searchQuery.trim()
+    navigate(
+      {
+        pathname: '/',
+        search: trimmed ? `?q=${encodeURIComponent(trimmed)}` : '',
+        hash: '#products-top',
+      },
+      { preventScrollReset: true },
+    )
+  }
+
+  const goFaqs = () => {
+    goListing('faqs')
+  }
+
+  const mobileLinks = [
+    { key: 'home', label: 'Home', onClick: goHome },
+    { key: 'all', label: 'Shop All', onClick: goShopAll },
+    { key: 'categories', label: 'Categories', onClick: goCategories },
     ...categories.map((c) => ({
       key: c.id,
-      label: c.title,
+      label: getCategoryLabel(c.id),
       onClick: () => goCategory(c.id),
       active: categoryFilter === c.id,
     })),
+    { key: 'faqs', label: 'FAQs', onClick: goFaqs },
   ]
 
   return (
-    <header className={`shop-nav sticky top-0 z-50 transition-[box-shadow,padding] duration-300 ${scrolled ? 'shop-nav--scrolled' : ''}`}>
-      <span className="shop-nav__pearl" aria-hidden />
-      <div className="shop-nav__bar mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
-        <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
-          <MotionLink
-            to="/"
-            aria-label="socutesyyy gift shop — home"
-            initial={false}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-            onClick={() => setCategoryFilter(null)}
-            className="shop-nav__logo group inline-flex h-11 w-fit max-w-full items-center gap-2.5 rounded-2xl px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e77da8] sm:h-12 sm:gap-3 sm:px-3.5"
-          >
-            <SatinBow className="hidden h-7 w-10 shrink-0 sm:block" opacity={0.95} />
-            <motion.span
-              className="inline-flex shrink-0"
-              whileHover={{ rotate: [0, -8, 6, 0] }}
-              transition={{ duration: 0.55 }}
-            >
-              <GiftIcon className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
-            </motion.span>
-            <div className="min-w-0">
-              <p className="truncate font-logo-wordmark text-xl lowercase leading-tight text-[#e77da8] sm:text-2xl">
-                socutesyyy
-              </p>
-              <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-[0.32em] text-[#704456]/70 sm:text-xs">
-                GIFT SHOP
-              </p>
-            </div>
-          </MotionLink>
-        </div>
+    <header
+      className={`shop-nav sticky top-0 z-50 ${scrolled ? 'shop-nav--scrolled' : ''}`}
+    >
+      <div className="shop-nav__bar">
+        <Link
+          to="/"
+          aria-label="SoCutesy gift shop — home"
+          onClick={() => {
+            clearProductFilters()
+            clearSearch()
+          }}
+          className="shop-nav__brand"
+        >
+          <img
+            src="/logo-socutesy.png"
+            alt="SoCutesy"
+            className="shop-nav__logo"
+            width={112}
+            height={112}
+            decoding="async"
+          />
+        </Link>
 
-        <nav className="hidden flex-1 items-center justify-center lg:flex" aria-label="Main">
-          <div className="shop-nav__links flex items-center gap-0.5 px-1.5 py-1">
-            {navLinks.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={item.onClick}
-                className={`shop-nav__link ${item.active ? 'shop-nav__link--active' : ''}`}
-              >
-                {item.label}
+        <nav className="shop-nav__desktop" aria-label="Main">
+          <ul className="shop-nav__list">
+            <li>
+              <button type="button" onClick={goHome} className="shop-nav__link">
+                Home
               </button>
-            ))}
-          </div>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={goShopAll}
+                className={`shop-nav__link ${!categoryFilter ? 'shop-nav__link--active' : ''}`}
+              >
+                Shop All
+              </button>
+            </li>
+            <li className="shop-nav__shop" ref={shopRef}>
+              <button
+                type="button"
+                className={`shop-nav__link ${categoryFilter ? 'shop-nav__link--active' : ''}`}
+                aria-expanded={shopOpen}
+                aria-haspopup="true"
+                onClick={() => setShopOpen((o) => !o)}
+              >
+                Shop by Category
+              </button>
+              {shopOpen && (
+                <div className="shop-nav__mega" role="menu">
+                  {categories.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="menuitem"
+                      className="shop-nav__mega-item"
+                      onClick={() => goCategory(c.id)}
+                    >
+                      {getCategoryLabel(c.id)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </li>
+            <li>
+              <button type="button" className="shop-nav__link" onClick={goFaqs}>
+                FAQs
+              </button>
+            </li>
+            <li>
+              <a
+                href={CONTACT_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shop-nav__link shop-nav__link--a"
+              >
+                Contact
+              </a>
+            </li>
+          </ul>
         </nav>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-          <motion.button
+        <div className="shop-nav__actions shop-nav__actions--bar">
+          <AnimatePresence initial={false}>
+            {searchOpen && (
+              <motion.form
+                key="search"
+                initial={reduceMotion ? false : { opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'min(14rem, 42vw)' }}
+                exit={reduceMotion ? undefined : { opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+                className="shop-nav__search"
+                onSubmit={submitSearch}
+                role="search"
+              >
+                <input
+                  ref={searchRef}
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search gifts…"
+                  aria-label="Search gifts"
+                  className="shop-nav__search-input"
+                />
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          <button
+            type="button"
+            onClick={() => (searchOpen ? submitSearch() : openSearch())}
+            className="shop-nav__icon-btn"
+            aria-label={searchOpen ? 'Search' : 'Open search'}
+            aria-expanded={searchOpen}
+          >
+            <IconSearch className="h-5 w-5" />
+          </button>
+
+          <button
             type="button"
             onClick={() => setCartOpen((o) => !o)}
-            whileHover={{ y: -1, scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="shop-nav__cart relative flex h-11 items-center gap-2 rounded-xl px-3.5 font-semibold text-white sm:h-12 sm:px-4"
+            className={`shop-nav__bag ${cartOpen ? 'shop-nav__bag--open' : ''}`}
+            aria-expanded={cartOpen}
+            aria-label={count > 0 ? `Bag, ${count} items` : 'Bag'}
           >
-            <IconCart className="h-5 w-5" />
-            <span className="hidden sm:inline">Cart</span>
-            <AnimatePresence>
-              {count > 0 && (
-                <motion.span
-                  key={count}
-                  initial={{ scale: 0.35, opacity: 0, y: 4 }}
-                  animate={{ scale: [0.35, 1.18, 1], opacity: 1, y: 0 }}
-                  exit={{ scale: 0.4, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 520, damping: 16 }}
-                  className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#704456] px-1 text-[10px] font-bold text-[#fff7fa]"
-                >
-                  {count > 99 ? '99+' : count}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            <IconBag className="shop-nav__bag-icon" />
+            {count > 0 && (
+              <span className="shop-nav__bag-count">
+                {count > 99 ? '99+' : count}
+              </span>
+            )}
+          </button>
 
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
-            className="shop-nav__menu-btn flex h-11 w-11 items-center justify-center rounded-xl text-[#704456] sm:h-12 sm:w-12 lg:hidden"
+            className="shop-nav__menu-btn"
             aria-expanded={mobileNavOpen}
-            aria-label="Menu"
+            aria-controls="shop-mobile-nav"
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileNavOpen ? (
               <IconClose className="h-5 w-5" />
@@ -170,28 +306,54 @@ export function ShopHeader() {
       <AnimatePresence>
         {mobileNavOpen && (
           <motion.nav
-            initial={{ opacity: 0, height: 0 }}
+            id="shop-mobile-nav"
+            initial={reduceMotion ? false : { opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            className="shop-nav__mobile overflow-hidden lg:hidden"
+            exit={reduceMotion ? undefined : { opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="shop-nav__mobile"
+            aria-label="Mobile"
           >
-            <div className="mx-auto flex max-w-6xl flex-col gap-1.5 px-4 py-4 sm:px-6">
-              {navLinks.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={item.onClick}
-                  className={`rounded-2xl px-4 py-3.5 text-left text-sm font-semibold transition ${
-                    item.active
-                      ? 'bg-gradient-to-r from-[#f5b5cf] to-[#e77da8] text-white shadow-md'
-                      : 'bg-[#ffe4ef]/80 text-[#704456] hover:bg-[#fadce8]'
-                  }`}
-                >
-                  {item.label}
-                </button>
+            <form
+              className="shop-nav__mobile-search"
+              onSubmit={submitSearch}
+              role="search"
+            >
+              <IconSearch className="h-4 w-4 shrink-0 opacity-60" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search gifts…"
+                aria-label="Search gifts"
+              />
+            </form>
+            <ul className="shop-nav__mobile-list">
+              {mobileLinks.map((item) => (
+                <li key={item.key}>
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className={`shop-nav__mobile-link ${
+                      item.active ? 'shop-nav__mobile-link--active' : ''
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                </li>
               ))}
-            </div>
+              <li>
+                <a
+                  href={CONTACT_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shop-nav__mobile-link"
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Contact
+                </a>
+              </li>
+            </ul>
           </motion.nav>
         )}
       </AnimatePresence>
@@ -205,6 +367,7 @@ function CartPopover({ open, onClose }) {
   const navigate = useNavigate()
   const { setCheckoutFromCart } = useOrderFlow()
   const { items, removeLine, updateLineQty, subtotal } = useCart()
+  const reduceMotion = useReducedMotion()
 
   return (
     <AnimatePresence>
@@ -212,101 +375,104 @@ function CartPopover({ open, onClose }) {
         <>
           <motion.button
             type="button"
-            initial={{ opacity: 0 }}
+            initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-[#704456]/25 backdrop-blur-[2px]"
-            aria-label="Close cart"
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            className="shop-nav__cart-backdrop"
+            aria-label="Close bag"
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            role="dialog"
+            aria-label="Shopping bag"
+            initial={reduceMotion ? false : { opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="fixed right-4 top-[6.25rem] z-50 max-h-[70vh] w-[min(100vw-2rem,22rem)] overflow-auto rounded-2xl border border-[#f5b5cf] bg-gradient-to-b from-[#fff7fa] to-[#fff0f6] p-4 shadow-xl shadow-[#e77da8]/20 sm:right-6"
+            exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="shop-nav__cart-panel"
           >
-            <p className="font-display text-xl font-semibold text-[#704456]">Your cart</p>
+            <div className="shop-nav__cart-head">
+              <p className="shop-nav__cart-title">Your bag</p>
+              <button
+                type="button"
+                className="shop-nav__cart-close"
+                onClick={onClose}
+                aria-label="Close bag"
+              >
+                <IconClose className="h-4 w-4" />
+              </button>
+            </div>
+
             {items.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-[#f5b5cf] bg-[#fff7fa] px-4 py-8 text-center">
-                <p className="font-script text-xl text-[#e77da8]">still empty ♡</p>
-                <p className="mt-2 text-sm text-[#8a5a6e]">
-                  Add something pretty from the shop.
+              <div className="shop-nav__cart-empty">
+                <p className="shop-nav__cart-empty-title">Your bag is empty</p>
+                <p className="shop-nav__cart-empty-copy">
+                  Browse the collection to find something special.
                 </p>
                 <button
                   type="button"
-                  className="mt-4 text-sm font-semibold text-[#e77da8] underline-offset-2 hover:underline"
+                  className="shop-nav__cart-browse"
                   onClick={() => {
                     onClose()
-                    navigate('/', { preventScrollReset: true })
-                    setTimeout(() => {
-                      document
-                        .getElementById('products-top')
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }, 60)
+                    navigate(
+                      { pathname: '/', hash: '#products-top' },
+                      { preventScrollReset: true },
+                    )
                   }}
                 >
-                  Browse gifts →
+                  Browse the shop
                 </button>
               </div>
             ) : (
               <>
-                <ul className="mt-3 space-y-3">
+                <ul className="shop-nav__cart-lines">
                   {items.map((line) => (
-                    <li
-                      key={line.lineId}
-                      className="flex items-start gap-3 border-b border-[#fadce8] pb-3 text-sm"
-                    >
+                    <li key={line.lineId} className="shop-nav__cart-line">
                       <Link
                         to={`/product/${line.slug}`}
                         onClick={onClose}
-                        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-[#f5b5cf] bg-[#fadce8]"
+                        className="shop-nav__cart-thumb"
                       >
                         {line.image ? (
-                          <img
-                            src={line.image}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
+                          <img src={line.image} alt="" loading="lazy" />
                         ) : (
-                          <span className="flex h-full w-full items-center justify-center text-[10px] text-[#a85c7b]">
-                            gift
+                          <span className="shop-nav__cart-thumb-fallback">
+                            Item
                           </span>
                         )}
                       </Link>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-[#704456]">{line.name}</p>
-                        <p className="line-clamp-2 text-xs text-[#8a5a6e]">{line.summary}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <div className="inline-flex items-center rounded-lg border border-[#f5b5cf] bg-[#fff7fa]">
+                      <div className="shop-nav__cart-line-body">
+                        <p className="shop-nav__cart-line-name">{line.name}</p>
+                        <p className="shop-nav__cart-line-summary">
+                          {line.summary}
+                        </p>
+                        <div className="shop-nav__cart-line-meta">
+                          <div className="shop-nav__qty">
                             <button
                               type="button"
                               aria-label="Decrease quantity"
-                              className="px-2 py-1 text-sm font-semibold text-[#704456] hover:bg-[#fff0f6] disabled:opacity-40"
                               disabled={line.qty <= 1}
                               onClick={() => updateLineQty(line.lineId, -1)}
                             >
                               −
                             </button>
-                            <span className="min-w-[1.5rem] px-1 text-center text-sm font-semibold tabular-nums text-[#704456]">
-                              {line.qty}
-                            </span>
+                            <span>{line.qty}</span>
                             <button
                               type="button"
                               aria-label="Increase quantity"
-                              className="px-2 py-1 text-sm font-semibold text-[#704456] hover:bg-[#fff0f6] disabled:opacity-40"
                               disabled={line.qty >= 99}
                               onClick={() => updateLineQty(line.lineId, 1)}
                             >
                               +
                             </button>
                           </div>
-                          <span className="font-price text-xs tabular-nums text-[#e77da8]">
+                          <span className="shop-nav__cart-line-price">
                             RS. {(line.unitPrice * line.qty).toLocaleString()}
                           </span>
                         </div>
                         <Link
                           to={`/product/${line.slug}`}
-                          className="mt-1 inline-block text-xs font-medium text-[#e77da8]"
+                          className="shop-nav__cart-view"
                           onClick={onClose}
                         >
                           View product
@@ -314,7 +480,7 @@ function CartPopover({ open, onClose }) {
                       </div>
                       <button
                         type="button"
-                        className="text-xs text-[#8a5a6e] transition hover:text-[#e77da8]"
+                        className="shop-nav__cart-remove"
                         onClick={() => removeLine(line.lineId)}
                       >
                         Remove
@@ -322,18 +488,20 @@ function CartPopover({ open, onClose }) {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4 flex items-center justify-between border-t border-[#fadce8] pt-3">
-                  <span className="text-sm font-medium text-[#8a5a6e]">Subtotal</span>
-                  <span className="font-price text-base tabular-nums text-[#704456]">
-                    RS. {subtotal.toLocaleString()}
-                  </span>
+                <div className="shop-nav__cart-subtotal">
+                  <span>Subtotal</span>
+                  <span>RS. {subtotal.toLocaleString()}</span>
                 </div>
+                <p className="shop-nav__cart-note">
+                  Photos and details are collected at checkout when needed.
+                </p>
               </>
             )}
+
             <button
               type="button"
               disabled={items.length === 0}
-              className="btn-candy mt-4 w-full py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="shop-nav__checkout"
               onClick={() => {
                 if (items.length === 0) return
                 setCheckoutFromCart(items)

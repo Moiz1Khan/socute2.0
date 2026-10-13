@@ -4,6 +4,7 @@ import { useShopBack } from '../hooks/useShopBack'
 import { motion, useReducedMotion } from 'framer-motion'
 import { easeOut } from '../utils/motionPresets'
 import { getProductBySlug } from '../utils/products'
+import { getCategoryLabel } from '../utils/shopConfig'
 import {
   clampSideIndex,
   defaultSelection,
@@ -24,8 +25,11 @@ import { whatsappLink } from '../utils/whatsapp'
 export default function ProductDetail() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const goBackToShop = useShopBack()
   const product = getProductBySlug(slug)
+  const backFallback = product?.category
+    ? `/#section-${product.category}`
+    : '/'
+  const goBackToShop = useShopBack(backFallback)
   const { addToCart } = useCart()
   const { clearFiles, setOrderMeta } = useOrderFlow()
   const reduceMotion = useReducedMotion()
@@ -132,11 +136,11 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <main className="min-h-[60vh] bg-gradient-to-b from-[#fff7fa] via-[#fff0f6] to-[#fadce8] px-4 py-20 text-center">
-        <p className="font-display text-2xl text-[#704456]">Product not found.</p>
+      <main className="min-h-[60vh] bg-[#fffcfd] px-4 py-20 text-center">
+        <p className="font-display text-2xl text-[#493c43]">Product not found.</p>
         <Link
-          to="/"
-          className="mt-4 inline-block text-sm font-semibold text-[#e77da8] transition hover:text-[#a85c7b]"
+          to={{ pathname: '/', hash: '#products-top' }}
+          className="mt-4 inline-block text-sm font-semibold text-[#e66f98] transition hover:text-[#e66f98]"
         >
           ← Back to shop
         </Link>
@@ -247,37 +251,59 @@ export default function ProductDetail() {
     product.variantSelectLabel ??
     (v0?.size != null ? 'Size' : v0?.sides != null ? 'Sides' : 'Option')
 
+  const categoryLabel = getCategoryLabel(product.category)
+
   return (
-    <main className="relative min-h-[70vh] overflow-hidden bg-gradient-to-b from-[#fff7fa] via-[#fff0f6] to-[#fadce8] px-4 py-10 sm:px-6 lg:py-14">
-      <div
-        className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-[#f5b5cf]/35 blur-3xl"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute -right-16 bottom-20 h-64 w-64 rounded-full bg-[#e77da8]/20 blur-3xl"
-        aria-hidden
-      />
+    <main className="pdp-main relative min-h-[70vh] overflow-hidden bg-[var(--brand-white)] px-4 py-10 pb-28 sm:px-6 lg:py-14 lg:pb-14">
 
       <div className="relative mx-auto max-w-4xl">
-      <button
-        type="button"
-        onClick={goBackToShop}
-        className="mb-6 inline-flex text-sm font-semibold text-[#a85c7b] transition hover:text-[#e77da8]"
-      >
-        ← Back to shop
-      </button>
+      <nav className="pdp-breadcrumb mb-6" aria-label="Breadcrumb">
+        <ol className="pdp-breadcrumb__list">
+          <li>
+            <Link to="/" className="pdp-breadcrumb__link">
+              Home
+            </Link>
+          </li>
+          <li aria-hidden className="pdp-breadcrumb__sep">
+            /
+          </li>
+          <li>
+            <Link
+              to={{ pathname: '/', hash: `#section-${product.category}` }}
+              className="pdp-breadcrumb__link"
+            >
+              {categoryLabel}
+            </Link>
+          </li>
+          <li aria-hidden className="pdp-breadcrumb__sep">
+            /
+          </li>
+          <li>
+            <span className="pdp-breadcrumb__current" aria-current="page">
+              {product.name}
+            </span>
+          </li>
+        </ol>
+        <button
+          type="button"
+          onClick={goBackToShop}
+          className="pdp-breadcrumb__back"
+        >
+          ← Back
+        </button>
+      </nav>
 
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: easeOut }}
-          className="overflow-hidden rounded-[1.75rem] border border-[#f5b5cf] bg-gradient-to-br from-[#fff7fa] to-[#fadce8] shadow-lg shadow-[#e77da8]/15"
+          className="overflow-hidden rounded-[1.1rem] border border-[rgba(233,175,193,0.55)] bg-[var(--brand-white)] shadow-[0_10px_28px_rgba(70,59,64,0.06)]"
         >
           <button
             type="button"
             onClick={() => setLightboxOpen(true)}
-            className="group relative block w-full cursor-zoom-in p-0 text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-[#e77da8]/45 focus-visible:ring-offset-2"
+            className="group relative block w-full cursor-zoom-in p-0 text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(206,111,145,0.35)] focus-visible:ring-offset-2"
             aria-label="View full image"
           >
             <img
@@ -287,18 +313,20 @@ export default function ProductDetail() {
                 product.image
               }
               alt={product.imageAlt ?? product.name}
-              className={`aspect-square w-full transition group-hover:brightness-[1.02] ${
+              width={640}
+              height={800}
+              className={`aspect-[4/5] w-full transition group-hover:brightness-[1.02] ${
                 product.slug === 'photobooth-strips'
-                  ? 'object-contain bg-[#fff0f6] p-3'
+                  ? 'object-contain bg-[#fdf0f5] p-3'
                   : 'object-cover'
               }`}
             />
-            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-[#704456]/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 shadow-sm transition group-hover:opacity-100 sm:text-xs">
+            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-[rgba(70,59,64,0.55)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 shadow-sm transition group-hover:opacity-100 sm:text-xs">
               Full size
             </span>
           </button>
           {galleryImages.length > 1 && (
-            <div className="flex gap-2 border-t border-[#f5b5cf]/80 bg-[#fff7fa]/95 p-3">
+            <div className="flex gap-2 border-t border-[#f6b6cc]/80 bg-[#fffcfd]/95 p-3">
               {galleryImages.map((src, i) => (
                 <button
                   key={`${src}-${i}`}
@@ -324,7 +352,7 @@ export default function ProductDetail() {
                   }}
                   className={`relative shrink-0 overflow-hidden rounded-xl ring-2 ring-offset-2 transition ${
                     activeImageIndex === i
-                      ? 'ring-[#e77da8]'
+                      ? 'ring-[#e66f98]'
                       : 'ring-transparent opacity-80 hover:opacity-100'
                   }`}
                   aria-label={`View photo ${i + 1}`}
@@ -346,22 +374,22 @@ export default function ProductDetail() {
           transition={{ delay: reduceMotion ? 0 : 0.08, duration: 0.5, ease: easeOut }}
           className="flex flex-col"
         >
-          <h1 className="font-display text-3xl font-semibold tracking-tight text-[#704456] sm:text-4xl">
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-[#493c43] sm:text-4xl">
             {product.name}
           </h1>
 
           {product.description && (
-            <p className="mt-3 max-w-prose text-sm leading-relaxed text-[#8a5a6e] sm:text-[15px]">
+            <p className="mt-3 max-w-prose text-sm leading-relaxed text-[#755f69] sm:text-[15px]">
               {product.description}
             </p>
           )}
 
           {product.detailBullets?.length > 0 && (
-            <div className="mt-5 rounded-2xl border border-[#f5b5cf]/80 bg-gradient-to-b from-[#fff7fa] to-[#fff0f6] px-4 py-3.5 sm:px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#e77da8]">
+            <div className="mt-5 rounded-2xl border border-[#f6b6cc]/80 bg-gradient-to-b from-[#fffcfd] to-[#fdf0f5] px-4 py-3.5 sm:px-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#e66f98]">
                 Details
               </p>
-              <ul className="mt-2.5 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-[#704456]/85 marker:text-[#e77da8] sm:text-sm">
+              <ul className="mt-2.5 list-disc space-y-1.5 pl-4 text-xs leading-relaxed text-[#493c43]/85 marker:text-[#e66f98] sm:text-sm">
                 {product.detailBullets.map((line, i) => (
                   <li key={`${i}-${line}`}>{line}</li>
                 ))}
@@ -369,7 +397,7 @@ export default function ProductDetail() {
             </div>
           )}
 
-          <div className="mt-8 space-y-5 rounded-2xl border border-[#f5b5cf]/80 bg-gradient-to-b from-[#fff7fa] to-[#fadce8]/50 p-5 shadow-inner shadow-[#f5b5cf]/30">
+          <div className="mt-8 space-y-5 rounded-2xl border border-[#f6b6cc]/80 bg-gradient-to-b from-[#fffcfd] to-[#fdf0f5]/50 p-5 shadow-inner shadow-[#f6b6cc]/30">
             {isKeepsake && selection.kind === 'keepsake' && (
               <KeepsakeCustomize
                 product={product}
@@ -384,7 +412,7 @@ export default function ProductDetail() {
 
             {hasPaperOptions && selection.kind === 'options' && (
               <>
-                <label className="block text-sm font-semibold text-[#704456]">
+                <label className="block text-sm font-semibold text-[#493c43]">
                   Paper type
                   <ShopSelect
                     value={selection.paperIndex}
@@ -392,7 +420,7 @@ export default function ProductDetail() {
                     onChange={onPaperSelect}
                   />
                 </label>
-                <label className="block text-sm font-semibold text-[#704456]">
+                <label className="block text-sm font-semibold text-[#493c43]">
                   Sides
                   <ShopSelect
                     value={selection.sideIndex}
@@ -406,7 +434,7 @@ export default function ProductDetail() {
             )}
 
             {hasFlatVariants && selection.kind === 'variants' && (
-              <label className="block text-sm font-semibold text-[#704456]">
+              <label className="block text-sm font-semibold text-[#493c43]">
                 {variantGroupLabel}
                 <ShopSelect
                   value={selection.index}
@@ -417,11 +445,11 @@ export default function ProductDetail() {
             )}
 
             {isCustomDesign && !isKeepsake && (
-              <div className="rounded-2xl border border-dashed border-[#f5b5cf] bg-[#fff7fa] px-4 py-5 text-center">
-                <p className="text-sm font-semibold text-[#704456]">
+              <div className="rounded-2xl border border-dashed border-[#f6b6cc] bg-[#fffcfd] px-4 py-5 text-center">
+                <p className="text-sm font-semibold text-[#493c43]">
                   Custom sticker sheet
                 </p>
-                <p className="mt-2 text-xs leading-relaxed text-[#8a5a6e]">
+                <p className="mt-2 text-xs leading-relaxed text-[#755f69]">
                   Send your own sticker sheet design or reference on WhatsApp
                   and we will make it for you.
                 </p>
@@ -437,25 +465,25 @@ export default function ProductDetail() {
             )}
 
             {!isCustomDesign && (
-              <div className="border-t border-[#f5b5cf]/70 pt-5">
-                <p className="text-sm font-semibold text-[#704456]">Quantity</p>
-                <div className="mt-2 flex max-w-[12rem] items-center gap-1 rounded-2xl border border-[#f5b5cf] bg-[#fff7fa] p-1 shadow-sm">
+              <div className="border-t border-[#f6b6cc]/70 pt-5">
+                <p className="text-sm font-semibold text-[#493c43]">Quantity</p>
+                <div className="mt-2 flex max-w-[12rem] items-center gap-1 rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] p-1 shadow-sm">
                   <button
                     type="button"
                     aria-label="Decrease quantity"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-[#704456] transition hover:bg-[#fff0f6] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-[#493c43] transition hover:bg-[#fdf0f5] disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={quantity <= 1}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   >
                     −
                   </button>
-                  <span className="min-w-[2.5rem] flex-1 text-center text-base font-semibold tabular-nums text-[#704456]">
+                  <span className="min-w-[2.5rem] flex-1 text-center text-base font-semibold tabular-nums text-[#493c43]">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     aria-label="Increase quantity"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-[#704456] transition hover:bg-[#fff0f6] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-semibold text-[#493c43] transition hover:bg-[#fdf0f5] disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={quantity >= 99}
                     onClick={() => setQuantity((q) => Math.min(99, q + 1))}
                   >
@@ -464,37 +492,72 @@ export default function ProductDetail() {
                 </div>
                 <div className="mt-4">
                   <PriceDisplay amount={price} />
-                  <p className="mt-1 text-xs text-[#8a5a6e]">Price per item</p>
+                  <p className="mt-1 text-xs text-[#755f69]">Price per item</p>
                 </div>
               </div>
             )}
 
             {keepsakeError && (
-              <p className="text-xs font-medium text-[#a85c7b]">{keepsakeError}</p>
+              <p className="text-xs font-medium text-[#e66f98]">{keepsakeError}</p>
             )}
           </div>
 
           {!isCustomDesign && (
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <>
+              <p className="pdp-delivery-note mt-6">
+                Delivery usually takes 4–7 working days. Delivery charges are
+                fixed according to courier services.
+              </p>
+              <div className="pdp-actions mt-6 hidden gap-3 lg:flex">
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="btn-candy btn-feedback flex-1 py-3.5 text-sm"
+                >
+                  Add to cart
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePlaceOrder}
+                  className="btn-feedback flex flex-1 items-center justify-center rounded-2xl border-2 border-[rgba(233,175,193,0.85)] bg-[var(--brand-white)] py-3.5 text-center text-sm font-semibold text-[var(--brand-pink)] shadow-sm transition hover:border-[var(--brand-pink)] hover:bg-[var(--brand-blush)]"
+                >
+                  Place order
+                </button>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </div>
+      </div>
+
+      {!isCustomDesign && (
+        <div className="pdp-sticky-cta lg:hidden" role="region" aria-label="Purchase">
+          <div className="pdp-sticky-cta__inner">
+            <div className="pdp-sticky-cta__price">
+              <span className="pdp-sticky-cta__label">{product.name}</span>
+              <span className="pdp-sticky-cta__amount">
+                RS. {(price * quantity).toLocaleString()}
+              </span>
+            </div>
+            <div className="pdp-sticky-cta__btns">
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="btn-candy btn-feedback flex-1 py-3.5 text-sm"
+                className="btn-candy btn-feedback py-3 text-xs"
               >
                 Add to cart
               </button>
               <button
                 type="button"
                 onClick={handlePlaceOrder}
-                className="btn-feedback flex flex-1 items-center justify-center rounded-2xl border-2 border-[#f5b5cf] bg-[#fff7fa] py-3.5 text-center text-sm font-semibold text-[#e77da8] shadow-sm transition hover:border-[#e77da8] hover:bg-[#fff0f6]"
+                className="pdp-sticky-cta__order"
               >
                 Place order
               </button>
             </div>
-          )}
-        </motion.div>
-      </div>
-      </div>
+          </div>
+        </div>
+      )}
 
       {lightboxOpen && (
         <div
@@ -507,7 +570,7 @@ export default function ProductDetail() {
           <button
             type="button"
             onClick={() => setLightboxOpen(false)}
-            className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#fff7fa]/10 text-2xl leading-none text-white transition hover:bg-[#fff7fa]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#fffcfd]/10 text-2xl leading-none text-white transition hover:bg-[#fffcfd]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             aria-label="Close"
           >
             ×
