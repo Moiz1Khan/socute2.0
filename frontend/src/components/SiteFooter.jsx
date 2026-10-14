@@ -9,6 +9,9 @@ import {
   getCategoryLabel,
 } from '../utils/shopConfig'
 
+const WA_HOME = whatsappLink('Hi SoCutesy!')
+const WA_SUPPORT = whatsappLink('Hi SoCutesy! I need order support.')
+
 const contactLinks = [
   {
     label: '@socutesyyy_',
@@ -16,12 +19,16 @@ const contactLinks = [
     external: true,
     icon: IconInstagram,
   },
-  {
-    label: WHATSAPP_DISPLAY,
-    href: whatsappLink('Hi SoCutesy!'),
-    external: true,
-    icon: IconWhatsApp,
-  },
+  ...(WA_HOME
+    ? [
+        {
+          label: WHATSAPP_DISPLAY,
+          href: WA_HOME,
+          external: true,
+          icon: IconWhatsApp,
+        },
+      ]
+    : []),
   {
     label: EMAIL,
     href: `mailto:${EMAIL}`,
@@ -83,15 +90,17 @@ export function SiteFooter() {
               <li>
                 <Link to="/checkout/customer">Checkout</Link>
               </li>
-              <li>
-                <a
-                  href={whatsappLink('Hi SoCutesy! I need order support.')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Order support
-                </a>
-              </li>
+              {WA_SUPPORT ? (
+                <li>
+                  <a
+                    href={WA_SUPPORT}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Order support
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
           <div>

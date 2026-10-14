@@ -222,16 +222,18 @@ export function ShopHeader() {
                 FAQs
               </button>
             </li>
-            <li>
-              <a
-                href={CONTACT_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shop-nav__link shop-nav__link--a"
-              >
-                Contact
-              </a>
-            </li>
+            {CONTACT_HREF ? (
+              <li>
+                <a
+                  href={CONTACT_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shop-nav__link shop-nav__link--a"
+                >
+                  Contact
+                </a>
+              </li>
+            ) : null}
           </ul>
         </nav>
 
@@ -342,17 +344,19 @@ export function ShopHeader() {
                   </button>
                 </li>
               ))}
-              <li>
-                <a
-                  href={CONTACT_HREF}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shop-nav__mobile-link"
-                  onClick={() => setMobileNavOpen(false)}
-                >
-                  Contact
-                </a>
-              </li>
+              {CONTACT_HREF ? (
+                <li>
+                  <a
+                    href={CONTACT_HREF}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shop-nav__mobile-link"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    Contact
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </motion.nav>
         )}
@@ -366,7 +370,7 @@ export function ShopHeader() {
 function CartPopover({ open, onClose }) {
   const navigate = useNavigate()
   const { setCheckoutFromCart } = useOrderFlow()
-  const { items, removeLine, updateLineQty, subtotal } = useCart()
+  const { items, removeLine, updateLineQty, subtotal, linePhotos } = useCart()
   const reduceMotion = useReducedMotion()
 
   return (
@@ -493,7 +497,8 @@ function CartPopover({ open, onClose }) {
                   <span>RS. {subtotal.toLocaleString()}</span>
                 </div>
                 <p className="shop-nav__cart-note">
-                  Photos and details are collected at checkout when needed.
+                  Photo products keep pictures per item. WhatsApp customization
+                  happens after you submit your order.
                 </p>
               </>
             )}
@@ -504,8 +509,10 @@ function CartPopover({ open, onClose }) {
               className="shop-nav__checkout"
               onClick={() => {
                 if (items.length === 0) return
-                setCheckoutFromCart(items)
-                navigate('/checkout/customer', { state: { cartItems: items } })
+                setCheckoutFromCart(items, linePhotos)
+                navigate('/checkout/customer', {
+                  state: { cartItems: items, linePhotos },
+                })
                 onClose()
               }}
             >

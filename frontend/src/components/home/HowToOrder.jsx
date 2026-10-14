@@ -2,8 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { fadeUp } from '../../utils/motionPresets'
 
 /**
- * How to Order — plain three-step guide matching the real checkout flow.
- * Process and payment policy unchanged.
+ * How to Order — matches WhatsApp vs photo-upload workflows.
  */
 export function HowToOrder() {
   const reduceMotion = useReducedMotion()
@@ -12,17 +11,17 @@ export function HowToOrder() {
     {
       n: '1',
       title: 'Pick your gift',
-      body: 'Browse the shop, open a product, and choose your options (size, paper, design, quantity). Then tap Place order or Add to cart.',
+      body: 'Browse the shop and choose your options (size, paper, design, quantity).',
     },
     {
       n: '2',
-      title: 'Add details & photos',
-      body: 'At checkout, enter your name, phone, and address. If the product needs photos, upload them on the same page — we show how many you need.',
+      title: 'Photos or WhatsApp',
+      body: 'Photo-only gifts (Polaroids, Photobooth Strips, Mini Photobook): upload pictures on the product page. Detailed gifts: we collect customization on WhatsApp after you submit your order.',
     },
     {
       n: '3',
-      title: 'Pay 50% to confirm',
-      body: 'Pay half online and upload your payment screenshot. The remaining 50% is paid when you receive your order.',
+      title: 'Checkout & submit',
+      body: 'Enter your details, pay 50% advance via JazzCash, and upload your payment screenshot. The remaining 50% is paid when you receive your order.',
     },
   ]
 
@@ -39,7 +38,8 @@ export function HowToOrder() {
             How to Order
           </h2>
           <p className="order-guide__lead">
-            Follow these steps on the website — no WhatsApp order needed.
+            Complete checkout on the website. Personalized details for magazines,
+            albums, and similar gifts are finished on WhatsApp after submission.
           </p>
         </motion.header>
 

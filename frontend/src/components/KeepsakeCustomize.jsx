@@ -10,6 +10,8 @@ export function KeepsakeCustomize({
   onSelectionChange,
   fieldValues,
   onFieldChange,
+  /** When true, skip on-site text fields (photos or WhatsApp workflows). */
+  hideFields = false,
 }) {
   const designs = product.designs ?? []
   const sizes = product.sizes ?? []
@@ -121,58 +123,63 @@ export function KeepsakeCustomize({
             {design.description ??
               'Send your own layout or reference on WhatsApp and we will make it for you.'}
           </p>
-          <a
-            href={customWhatsAppHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-[#e66f98] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105"
-          >
-            Send template on WhatsApp
-          </a>
+          {customWhatsAppHref ? (
+            <a
+              href={customWhatsAppHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center justify-center rounded-2xl bg-[#e66f98] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105"
+            >
+              Send template on WhatsApp
+            </a>
+          ) : (
+            <p className="mt-3 text-xs text-amber-800">
+              Set VITE_WHATSAPP_NUMBER to enable WhatsApp.
+            </p>
+          )}
         </div>
       ) : (
-        <>
-          {(design.fields?.length > 0 || design.fieldHint) && (
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-[#e66f98]">
-                Required text
-              </p>
-              {design.fieldHint && (
-                <p className="text-xs text-[#6b7280]">{design.fieldHint}</p>
-              )}
-              {design.fields?.map((field) => (
-                <label
-                  key={field.key}
-                  className="block text-xs font-medium text-[#493c43]"
-                >
-                  {field.label}
-                  {field.required ? (
-                    <span className="text-[#e66f98]"> *</span>
-                  ) : (
-                    <span className="font-normal text-[#9ca3af]"> (optional)</span>
-                  )}
-                  {field.multiline ? (
-                    <textarea
-                      rows={3}
-                      value={fieldValues[field.key] ?? ''}
-                      onChange={(e) => onFieldChange(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={fieldValues[field.key] ?? ''}
-                      onChange={(e) => onFieldChange(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
-                    />
-                  )}
-                </label>
-              ))}
-            </div>
-          )}
-        </>
+        !hideFields &&
+        (design.fields?.length > 0 || design.fieldHint) && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-[#e66f98]">
+              Required text
+            </p>
+            {design.fieldHint && (
+              <p className="text-xs text-[#6b7280]">{design.fieldHint}</p>
+            )}
+            {design.fields?.map((field) => (
+              <label
+                key={field.key}
+                className="block text-xs font-medium text-[#493c43]"
+              >
+                {field.label}
+                {field.required ? (
+                  <span className="text-[#e66f98]"> *</span>
+                ) : (
+                  <span className="font-normal text-[#9ca3af]"> (optional)</span>
+                )}
+                {field.multiline ? (
+                  <textarea
+                    rows={3}
+                    value={fieldValues[field.key] ?? ''}
+                    onChange={(e) => onFieldChange(field.key, e.target.value)}
+                    placeholder={field.placeholder}
+                    className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={fieldValues[field.key] ?? ''}
+                    onChange={(e) => onFieldChange(field.key, e.target.value)}
+                    placeholder={field.placeholder}
+                    className="mt-1 w-full rounded-2xl border border-[#f6b6cc] bg-[#fffcfd] px-4 py-3 text-sm font-medium text-[#493c43] shadow-sm outline-none placeholder:text-[#9ca3af] focus:border-[#f6b6cc] focus:ring-2 focus:ring-[#f6b6cc]"
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+        )
       )}
     </div>
   )

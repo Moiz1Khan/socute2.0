@@ -16,6 +16,8 @@ import {
  *   unitPrice: number
  *   summary: string
  *   qty: number
+ *   designPhotosRequired?: number | null
+ *   photosPerUnit?: number | null
  * }} CartLineSnapshot
  * @typedef {{
  *   fullName: string
@@ -29,28 +31,49 @@ import {
 
 const OrderFlowContext = createContext(null)
 
+function revokeAll(mapOrList) {
+  if (Array.isArray(mapOrList)) {
+    mapOrList.forEach((f) => {
+      try {
+        URL.revokeObjectURL(f.previewUrl)
+      } catch {
+        /* ignore */
+      }
+    })
+    return
+  }
+  Object.values(mapOrList || {}).forEach((list) => revokeAll(list))
+}
+
 export function OrderFlowProvider({ children }) {
-  /** 'product' = single product order; 'cart' = cart checkout snapshot */
   const [checkoutSource, setCheckoutSource] = useState('product')
-  /** Set when checkoutSource === 'cart' (copy of cart lines at checkout start) */
   const [cartSnapshot, setCartSnapshot] = useState(null)
   const [slug, setSlug] = useState(null)
   const [productName, setProductName] = useState('')
   const [unitPrice, setUnitPrice] = useState(0)
-  /** Units ordered (line quantity); subtotal = unitPrice × orderQty */
   const [orderQty, setOrderQty] = useState(1)
   const [selectionSummary, setSelectionSummary] = useState('')
-  /** @type {[OrderFile[], function]} */
+  /** Buy-now flat file list (also mirrored into lineFiles under buy-now line id) */
   const [files, setFiles] = useState([])
-  /** @type {[CustomerData | null, function]} */
+  /** @type {[{ [lineId: string]: OrderFile[] }, function]} */
+  const [lineFiles, setLineFiles] = useState({})
   const [customer, setCustomer] = useState(null)
-  /** Set after order + uploads are persisted on the server (short order ref). */
   const [serverOrderId, setServerOrderId] = useState(null)
+  /** Extra meta for photo requirements on buy-now */
+  const [buyNowPhotoMeta, setBuyNowPhotoMeta] = useState({
+    designPhotosRequired: null,
+    photosPerUnit: null,
+    productId: null,
+  })
 
   const clearOrder = useCallback(() => {
     setFiles((prev) => {
-      prev.forEach((f) => URL.revokeObjectURL(f.previewUrl))
+      revokeAll(prev)
       return []
+    })
+    setLineFiles((prev) => {
+      revokeAll(prev)
+      return {}
     })
     setCheckoutSource('product')
     setCartSnapshot(null)
@@ -61,16 +84,40 @@ export function OrderFlowProvider({ children }) {
     setSelectionSummary('')
     setCustomer(null)
     setServerOrderId(null)
+    setBuyNowPhotoMeta({
+      designPhotosRequired: null,
+      photosPerUnit: null,
+      productId: null,
+    })
   }, [])
 
-  const setCheckoutFromCart = useCallback((items) => {
+  /**
+   * @param {CartLineSnapshot[]} items
+   * @param {{ [lineId: string]: OrderFile[] }} [photosByLine]
+   */
+  const setCheckoutFromCart = useCallback((items, photosByLine = {}) => {
     if (!items?.length) return
     const snapshot = items.map((i) => ({ ...i }))
     const subtotal = snapshot.reduce((s, i) => s + i.unitPrice * i.qty, 0)
     const nameLine = snapshot.map((i) => i.name).join(', ')
     setFiles((prev) => {
-      prev.forEach((f) => URL.revokeObjectURL(f.previewUrl))
+      revokeAll(prev)
       return []
+    })
+    setLineFiles((prev) => {
+      revokeAll(prev)
+      /** Copy preview URLs — Files stay the same object references from cart */
+      const next = {}
+      for (const line of snapshot) {
+        const src = photosByLine[line.lineId]
+        if (src?.length) {
+          next[line.lineId] = src.map((f) => ({
+            file: f.file,
+            previewUrl: f.previewUrl,
+          }))
+        }
+      }
+      return next
     })
     setCheckoutSource('cart')
     setCartSnapshot(snapshot)
@@ -85,7 +132,17 @@ export function OrderFlowProvider({ children }) {
   }, [])
 
   const setOrderMeta = useCallback(
-    ({ slug: s, name, price, summary, quantity }) => {
+    ({
+      slug: s,
+      name,
+      price,
+      summary,
+      quantity,
+      designPhotosRequired = null,
+      photosPerUnit = null,
+      productId = null,
+      initialFiles = null,
+    }) => {
       setCheckoutSource('product')
       setCartSnapshot(null)
       setServerOrderId(null)
@@ -95,13 +152,33 @@ export function OrderFlowProvider({ children }) {
       setSelectionSummary(summary ?? '')
       const q = Math.max(1, Math.min(99, Math.floor(Number(quantity)) || 1))
       setOrderQty(q)
+      setBuyNowPhotoMeta({
+        designPhotosRequired,
+        photosPerUnit,
+        productId,
+      })
+      setLineFiles((prev) => {
+        revokeAll(prev)
+        return {}
+      })
+      setFiles((prev) => {
+        revokeAll(prev)
+        if (Array.isArray(initialFiles) && initialFiles.length) {
+          return initialFiles.map((entry) => {
+            const f = entry?.file instanceof File ? entry.file : entry
+            if (!(f instanceof File)) return null
+            return { file: f, previewUrl: URL.createObjectURL(f) }
+          }).filter(Boolean)
+        }
+        return []
+      })
     },
     [],
   )
 
   const clearFiles = useCallback(() => {
     setFiles((prev) => {
-      prev.forEach((f) => URL.revokeObjectURL(f.previewUrl))
+      revokeAll(prev)
       return []
     })
   }, [])
@@ -121,8 +198,50 @@ export function OrderFlowProvider({ children }) {
     setFiles((prev) => {
       const copy = [...prev]
       const [removed] = copy.splice(index, 1)
-      if (removed) URL.revokeObjectURL(removed.previewUrl)
+      if (removed) revokeAll([removed])
       return copy
+    })
+  }, [])
+
+  const setLineFilesFor = useCallback((lineId, nextList) => {
+    setLineFiles((prev) => {
+      if (prev[lineId]) revokeAll(prev[lineId])
+      const entries = (nextList || []).map((file) =>
+        file?.previewUrl
+          ? file
+          : { file, previewUrl: URL.createObjectURL(file) },
+      )
+      return { ...prev, [lineId]: entries }
+    })
+  }, [])
+
+  const addFilesToLine = useCallback((lineId, fileList) => {
+    const incoming = Array.from(fileList ?? [])
+    if (!incoming.length) return
+    setLineFiles((prev) => {
+      const added = incoming.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }))
+      return { ...prev, [lineId]: [...(prev[lineId] || []), ...added] }
+    })
+  }, [])
+
+  const removeFileFromLine = useCallback((lineId, index) => {
+    setLineFiles((prev) => {
+      const list = [...(prev[lineId] || [])]
+      const [removed] = list.splice(index, 1)
+      if (removed) revokeAll([removed])
+      return { ...prev, [lineId]: list }
+    })
+  }, [])
+
+  const clearLineFiles = useCallback((lineId) => {
+    setLineFiles((prev) => {
+      if (prev[lineId]) revokeAll(prev[lineId])
+      const next = { ...prev }
+      delete next[lineId]
+      return next
     })
   }, [])
 
@@ -136,13 +255,19 @@ export function OrderFlowProvider({ children }) {
       orderQty,
       selectionSummary,
       files,
+      lineFiles,
       customer,
       serverOrderId,
+      buyNowPhotoMeta,
       setCheckoutFromCart,
       setOrderMeta,
       clearFiles,
       addFiles,
       removeFileAt,
+      setLineFilesFor,
+      addFilesToLine,
+      removeFileFromLine,
+      clearLineFiles,
       setCustomer,
       setServerOrderId,
       clearOrder,
@@ -156,13 +281,19 @@ export function OrderFlowProvider({ children }) {
       orderQty,
       selectionSummary,
       files,
+      lineFiles,
       customer,
       serverOrderId,
+      buyNowPhotoMeta,
       setCheckoutFromCart,
       setOrderMeta,
       clearFiles,
       addFiles,
       removeFileAt,
+      setLineFilesFor,
+      addFilesToLine,
+      removeFileFromLine,
+      clearLineFiles,
       setCustomer,
       clearOrder,
     ],

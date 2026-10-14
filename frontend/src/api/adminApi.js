@@ -50,3 +50,29 @@ export function adminFileUrl(orderId, storedFilename) {
   const q = encodeURIComponent(storedFilename)
   return `/api/admin/orders/${encodeURIComponent(orderId)}/files/${q}`
 }
+
+export function adminOrderZipUrl(orderId) {
+  return `/api/admin/orders/${encodeURIComponent(orderId)}/zip`
+}
+
+export function adminPaymentProofUrl(orderId) {
+  return `/api/admin/orders/${encodeURIComponent(orderId)}/payment-proof`
+}
+
+export async function markOrderFulfilled(orderId) {
+  const r = await fetch(
+    `/api/admin/orders/${encodeURIComponent(orderId)}/mark-fulfilled`,
+    { method: 'POST', credentials: 'include' },
+  )
+  if (!r.ok) {
+    let msg = 'Failed to update'
+    try {
+      const j = await r.json()
+      if (j.error) msg = j.error
+    } catch {
+      /* ignore */
+    }
+    throw new Error(msg)
+  }
+  return r.json()
+}

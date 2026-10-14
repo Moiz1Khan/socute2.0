@@ -3,9 +3,10 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getProductBySlug } from '../utils/products'
 import {
-  getCheckoutPhotoRequirements,
+  getPhotoUploadLines,
   getOrderTotalAmount,
   splitAdvancePayment,
+  isWhatsAppCustomProduct,
 } from '../utils/orderFlow'
 import {
   defaultSelection,
@@ -13,9 +14,9 @@ import {
   getSelectionSummary,
 } from '../utils/pricing'
 import { CustomerForm } from '../components/CustomerForm'
-import { CheckoutPhotoUpload } from '../components/CheckoutPhotoUpload'
+import { LinePhotoUpload } from '../components/LinePhotoUpload'
 import { useOrderFlow } from '../context/OrderFlowContext'
-import { createOrder, uploadOrderPhotos } from '../api/ordersApi'
+import { createOrder, uploadOrderLinePhotos } from '../api/ordersApi'
 
 export default function CustomerFormPage() {
   const { slug } = useParams()
@@ -25,6 +26,7 @@ export default function CustomerFormPage() {
   const product = isCartCheckout ? null : getProductBySlug(slug)
   const {
     files,
+    lineFiles,
     customer,
     setCustomer,
     setOrderMeta,
@@ -39,16 +41,21 @@ export default function CustomerFormPage() {
     addFiles,
     removeFileAt,
     clearFiles,
+    addFilesToLine,
+    removeFileFromLine,
+    clearLineFiles,
+    buyNowPhotoMeta,
   } = useOrderFlow()
   const [saveError, setSaveError] = useState(null)
-  const [photoError, setPhotoError] = useState(null)
+  const [photoErrors, setPhotoErrors] = useState({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!isCartCheckout) return
     const fromNav = location.state?.cartItems
+    const fromPhotos = location.state?.linePhotos || {}
     if (Array.isArray(fromNav) && fromNav.length && checkoutSource !== 'cart') {
-      setCheckoutFromCart(fromNav)
+      setCheckoutFromCart(fromNav, fromPhotos)
     }
   }, [isCartCheckout, location.state, checkoutSource, setCheckoutFromCart])
 
@@ -62,7 +69,14 @@ export default function CustomerFormPage() {
     if (!product) {
       navigate('/', { replace: true })
     }
-  }, [isCartCheckout, checkoutSource, cartSnapshot, location.state, product, navigate])
+  }, [
+    isCartCheckout,
+    checkoutSource,
+    cartSnapshot,
+    location.state,
+    product,
+    navigate,
+  ])
 
   useEffect(() => {
     if (isCartCheckout || !product) return
@@ -74,6 +88,10 @@ export default function CustomerFormPage() {
         price: st.price,
         summary: st.summary,
         quantity: st.quantity ?? 1,
+        designPhotosRequired: st.designPhotosRequired ?? null,
+        photosPerUnit: st.photosPerUnit ?? product.photosPerUnit ?? null,
+        productId: product.id,
+        initialFiles: st.initialFiles || null,
       })
       return
     }
@@ -84,6 +102,8 @@ export default function CustomerFormPage() {
       price: getPrice(product, sel),
       summary: getSelectionSummary(product, sel),
       quantity: 1,
+      photosPerUnit: product.photosPerUnit ?? null,
+      productId: product.id,
     })
   }, [isCartCheckout, product, slug, location.state, setOrderMeta])
 
@@ -93,31 +113,60 @@ export default function CustomerFormPage() {
     return null
   }
 
-  const photoReqs = getCheckoutPhotoRequirements({
+  const photoLines = getPhotoUploadLines({
     checkoutSource: isCartCheckout ? 'cart' : 'product',
     slug: isCartCheckout ? null : slug,
+    productName: isCartCheckout ? null : productName,
     orderQty,
-    cartSnapshot,
+    cartSnapshot: isCartCheckout
+      ? cartSnapshot
+      : [
+          {
+            lineId: `buy-now:${slug}`,
+            slug,
+            name: productName,
+            qty: orderQty,
+            productId: buyNowPhotoMeta.productId || product?.id,
+            designPhotosRequired: buyNowPhotoMeta.designPhotosRequired,
+            photosPerUnit:
+              buyNowPhotoMeta.photosPerUnit ?? product?.photosPerUnit,
+          },
+        ],
   })
+
+  const whatsappHintLines = isCartCheckout
+    ? (cartSnapshot || []).filter((l) => isWhatsAppCustomProduct(l.slug))
+    : product && isWhatsAppCustomProduct(product.slug)
+      ? [{ name: product.name }]
+      : []
+
+  const filesForLine = (lineId) => {
+    if (!isCartCheckout && photoLines[0]?.lineId === lineId) {
+      return files
+    }
+    return lineFiles[lineId] || []
+  }
 
   const handleSubmit = async (data) => {
     setSaveError(null)
-    setPhotoError(null)
+    setPhotoErrors({})
     setSaving(true)
     try {
-      if (photoReqs.needed) {
-        if (files.length === 0) {
-          setPhotoError(
-            "Please add pictures for your product — otherwise the order won't proceed.",
-          )
-          setSaving(false)
-          return
+      const nextErrors = {}
+      for (const line of photoLines) {
+        const list = filesForLine(line.lineId)
+        if (list.length < line.min) {
+          nextErrors[line.lineId] =
+            `Please add at least ${line.min} picture${line.min === 1 ? '' : 's'} for ${line.name}.`
+        } else if (list.length > line.max) {
+          nextErrors[line.lineId] =
+            `Please use at most ${line.max} pictures for ${line.name}.`
         }
-        if (files.length > photoReqs.max) {
-          setPhotoError('Please remove some pictures and try again.')
-          setSaving(false)
-          return
-        }
+      }
+      if (Object.keys(nextErrors).length) {
+        setPhotoErrors(nextErrors)
+        setSaving(false)
+        return
       }
 
       const includeDelivery = data.includeDelivery !== false
@@ -142,7 +191,18 @@ export default function CustomerFormPage() {
       }
 
       const { id } = await createOrder(payload)
-      await uploadOrderPhotos(id, files)
+
+      for (const line of photoLines) {
+        const list = filesForLine(line.lineId)
+        if (!list.length) continue
+        await uploadOrderLinePhotos(id, list, {
+          lineItemId: line.lineId,
+          productId: line.productId || '',
+          productSlug: line.slug,
+          productName: line.name,
+        })
+      }
+
       setCustomer(data)
       setServerOrderId(id)
       if (isCartCheckout) {
@@ -188,7 +248,10 @@ export default function CustomerFormPage() {
             </h1>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-[#755f69]">
               We need this to confirm{' '}
-              <span className="font-semibold text-[#493c43]">{headingContext}</span>.
+              <span className="font-semibold text-[#493c43]">
+                {headingContext}
+              </span>
+              .
             </p>
           </div>
 
@@ -202,17 +265,48 @@ export default function CustomerFormPage() {
               </p>
             )}
 
-            {photoReqs.needed && (
-              <CheckoutPhotoUpload
-                files={files}
-                onAddFiles={addFiles}
-                onRemoveAt={removeFileAt}
-                onClear={clearFiles}
-                photoMax={photoReqs.max}
-                productLabels={photoReqs.productLabels}
-                error={photoError}
-              />
+            {whatsappHintLines.length > 0 && (
+              <div className="rounded-2xl border border-[#f6b6cc]/70 bg-[#fdf0f5]/50 px-4 py-3 text-sm text-[#755f69]">
+                Customization details for{' '}
+                <span className="font-semibold text-[#493c43]">
+                  {whatsappHintLines.map((l) => l.name).join(', ')}
+                </span>{' '}
+                will be collected on WhatsApp after you submit your order.
+              </div>
             )}
+
+            {photoLines.map((line) => (
+              <LinePhotoUpload
+                key={line.lineId}
+                title={`Pictures for ${line.name}`}
+                hint="Upload your pictures here before placing your order."
+                files={filesForLine(line.lineId)}
+                min={line.min}
+                max={line.max}
+                error={photoErrors[line.lineId] || null}
+                onAddFiles={(list) => {
+                  if (!isCartCheckout && photoLines[0]?.lineId === line.lineId) {
+                    addFiles(list)
+                  } else {
+                    addFilesToLine(line.lineId, list)
+                  }
+                }}
+                onRemoveAt={(i) => {
+                  if (!isCartCheckout && photoLines[0]?.lineId === line.lineId) {
+                    removeFileAt(i)
+                  } else {
+                    removeFileFromLine(line.lineId, i)
+                  }
+                }}
+                onClear={() => {
+                  if (!isCartCheckout && photoLines[0]?.lineId === line.lineId) {
+                    clearFiles()
+                  } else {
+                    clearLineFiles(line.lineId)
+                  }
+                }}
+              />
+            ))}
 
             <CustomerForm
               defaultValues={customer ?? undefined}

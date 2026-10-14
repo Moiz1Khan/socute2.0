@@ -15,12 +15,18 @@ import { PriceDisplay } from '../components/PriceDisplay'
 import { ShopSelect } from '../components/ShopSelect'
 import {
   KeepsakeCustomize,
-  validateKeepsakeOrder,
   buildKeepsakeNotes,
 } from '../components/KeepsakeCustomize'
+import { LinePhotoUpload } from '../components/LinePhotoUpload'
 import { useCart } from '../context/CartContext'
 import { useOrderFlow } from '../context/OrderFlowContext'
 import { whatsappLink } from '../utils/whatsapp'
+import {
+  getCustomizationMode,
+  getLinePhotoRequirements,
+  isPhotoUploadProduct,
+  isWhatsAppCustomProduct,
+} from '../utils/customizationMode'
 
 export default function ProductDetail() {
   const { slug } = useParams()
@@ -31,7 +37,8 @@ export default function ProductDetail() {
     : '/'
   const goBackToShop = useShopBack(backFallback)
   const { addToCart } = useCart()
-  const { clearFiles, setOrderMeta } = useOrderFlow()
+  const { clearFiles, setOrderMeta, files, addFiles, removeFileAt } =
+    useOrderFlow()
   const reduceMotion = useReducedMotion()
 
   const [selection, setSelection] = useState(() =>
@@ -44,6 +51,11 @@ export default function ProductDetail() {
   const [keepsakeError, setKeepsakeError] = useState('')
 
   const isKeepsake = Boolean(product?.designs?.length && product?.sizes?.length)
+  const customMode = product ? getCustomizationMode(product.slug) : 'none'
+  const isPhotoProduct = product ? isPhotoUploadProduct(product.slug) : false
+  const isWhatsAppProduct = product
+    ? isWhatsAppCustomProduct(product.slug)
+    : false
 
   useEffect(() => {
     if (product) setSelection(defaultSelection(product))
@@ -55,8 +67,8 @@ export default function ProductDetail() {
     setQuantity(1)
     setFieldValues({})
     setKeepsakeError('')
-    if (isKeepsake) clearFiles()
-  }, [slug, isKeepsake, clearFiles])
+    clearFiles()
+  }, [slug, clearFiles])
 
   useEffect(() => {
     if (!lightboxOpen) return
@@ -96,6 +108,16 @@ export default function ProductDetail() {
   const customWhatsAppHref = whatsappLink(
     `Hi SoCutesy! I want a *custom ${product?.name ?? 'product'}*.\n\nI will send my own design / sticker sheet reference here.`,
   )
+
+  const photoReqs =
+    product && isPhotoProduct
+      ? getLinePhotoRequirements({
+          slug: product.slug,
+          qty: quantity,
+          designPhotosRequired: activeDesign?.photosRequired ?? null,
+          photosPerUnit: product.photosPerUnit ?? null,
+        })
+      : { min: 0, max: 0 }
 
   const galleryImages = useMemo(() => {
     if (!product) return []
@@ -187,55 +209,92 @@ export default function ProductDetail() {
     setSelection(next)
   }
 
+  const buildSummary = () => {
+    if (isKeepsake && activeDesign && !activeDesign.whatsappCustom) {
+      const sizeLabel = product.sizes[selection.sizeIndex]?.size ?? ''
+      if (isWhatsAppProduct || isPhotoProduct) {
+        return `${summary} · Template: ${activeDesign.label} · ${sizeLabel}${
+          activeDesign.photosRequired
+            ? ` · ${activeDesign.photosRequired} photos`
+            : ''
+        }`
+      }
+      const notes = buildKeepsakeNotes(activeDesign, fieldValues, sizeLabel)
+      return `${summary}\n${notes}`
+    }
+    return summary
+  }
+
   const handleAddToCart = () => {
     if (isCustomDesign) return
+    if (isPhotoProduct) {
+      if (files.length < photoReqs.min) {
+        setKeepsakeError(
+          `Please upload at least ${photoReqs.min} picture${photoReqs.min === 1 ? '' : 's'} before adding to cart.`,
+        )
+        return
+      }
+      if (files.length > photoReqs.max) {
+        setKeepsakeError(`Please use at most ${photoReqs.max} pictures.`)
+        return
+      }
+    }
+    setKeepsakeError('')
+    const fullSummary = buildSummary()
     addToCart({
       productId: product.id,
       name: product.name,
       slug: product.slug,
       unitPrice: price,
-      summary,
+      summary: fullSummary,
       qty: quantity,
       image: product.image,
+      designPhotosRequired: activeDesign?.photosRequired ?? null,
+      photosPerUnit: product.photosPerUnit ?? null,
+      customizationMode: customMode,
+      photos: isPhotoProduct ? files.map((f) => f.file) : null,
     })
+    if (isPhotoProduct) clearFiles()
   }
 
   const handlePlaceOrder = () => {
     if (isCustomDesign) return
 
-    if (isKeepsake) {
-      const err = validateKeepsakeOrder(activeDesign, fieldValues)
-      if (err) {
-        setKeepsakeError(err)
+    if (isPhotoProduct) {
+      if (files.length < photoReqs.min) {
+        setKeepsakeError(
+          `Please upload at least ${photoReqs.min} picture${photoReqs.min === 1 ? '' : 's'} before placing your order.`,
+        )
         return
       }
-      const sizeLabel = product.sizes[selection.sizeIndex]?.size ?? ''
-      const notes = buildKeepsakeNotes(activeDesign, fieldValues, sizeLabel)
-      const fullSummary = `${summary}\n${notes}`
-      setOrderMeta({
-        slug: product.slug,
-        name: product.name,
-        price,
-        summary: fullSummary,
-        quantity,
-      })
-      setKeepsakeError('')
-      navigate(`/order/${product.slug}/customer`, {
-        state: { price, summary: fullSummary, quantity },
-      })
-      return
+      if (files.length > photoReqs.max) {
+        setKeepsakeError(`Please use at most ${photoReqs.max} pictures.`)
+        return
+      }
     }
 
-    // Place order → checkout details page (photos asked there when needed).
+    const fullSummary = buildSummary()
     setOrderMeta({
       slug: product.slug,
       name: product.name,
       price,
-      summary,
+      summary: fullSummary,
       quantity,
+      designPhotosRequired: activeDesign?.photosRequired ?? null,
+      photosPerUnit: product.photosPerUnit ?? null,
+      productId: product.id,
+      initialFiles: isPhotoProduct ? files : null,
     })
+    setKeepsakeError('')
     navigate(`/order/${product.slug}/customer`, {
-      state: { price, summary, quantity },
+      state: {
+        price,
+        summary: fullSummary,
+        quantity,
+        designPhotosRequired: activeDesign?.photosRequired ?? null,
+        photosPerUnit: product.photosPerUnit ?? null,
+        initialFiles: isPhotoProduct ? files : null,
+      },
     })
   }
 
@@ -398,6 +457,19 @@ export default function ProductDetail() {
           )}
 
           <div className="mt-8 space-y-5 rounded-2xl border border-[#f6b6cc]/80 bg-gradient-to-b from-[#fffcfd] to-[#fdf0f5]/50 p-5 shadow-inner shadow-[#f6b6cc]/30">
+            {isWhatsAppProduct && (
+              <p className="rounded-2xl border border-[#f6b6cc]/70 bg-[#fdf0f5]/60 px-4 py-3 text-xs leading-relaxed text-[#755f69]">
+                Customization details will be collected on WhatsApp after
+                placing your order.
+              </p>
+            )}
+
+            {isPhotoProduct && (
+              <p className="rounded-2xl border border-[#f6b6cc]/70 bg-[#fdf0f5]/60 px-4 py-3 text-xs leading-relaxed text-[#755f69]">
+                Upload your pictures here before placing your order.
+              </p>
+            )}
+
             {isKeepsake && selection.kind === 'keepsake' && (
               <KeepsakeCustomize
                 product={product}
@@ -407,6 +479,21 @@ export default function ProductDetail() {
                 onFieldChange={(key, value) =>
                   setFieldValues((prev) => ({ ...prev, [key]: value }))
                 }
+                hideFields={isPhotoProduct || isWhatsAppProduct}
+              />
+            )}
+
+            {isPhotoProduct && !isCustomDesign && (
+              <LinePhotoUpload
+                title="Your pictures"
+                hint="Upload your pictures here before placing your order."
+                files={files}
+                min={photoReqs.min}
+                max={photoReqs.max}
+                onAddFiles={addFiles}
+                onRemoveAt={removeFileAt}
+                onClear={clearFiles}
+                error={keepsakeError}
               />
             )}
 
@@ -453,14 +540,20 @@ export default function ProductDetail() {
                   Send your own sticker sheet design or reference on WhatsApp
                   and we will make it for you.
                 </p>
-                <a
-                  href={customWhatsAppHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-candy mt-4 inline-flex items-center justify-center px-5 py-3 text-sm"
-                >
-                  Send on WhatsApp
-                </a>
+                {customWhatsAppHref ? (
+                  <a
+                    href={customWhatsAppHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-candy mt-4 inline-flex items-center justify-center px-5 py-3 text-sm"
+                  >
+                    Send on WhatsApp
+                  </a>
+                ) : (
+                  <p className="mt-3 text-xs text-amber-800">
+                    Set VITE_WHATSAPP_NUMBER to enable WhatsApp.
+                  </p>
+                )}
               </div>
             )}
 
@@ -497,7 +590,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {keepsakeError && (
+            {keepsakeError && !isPhotoProduct && (
               <p className="text-xs font-medium text-[#e66f98]">{keepsakeError}</p>
             )}
           </div>

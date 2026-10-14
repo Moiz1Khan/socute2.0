@@ -1,102 +1,188 @@
 /**
- * Product-specific ordering: upload vs contact-only WhatsApp flows.
+ * Order totals + checkout helpers.
+ * Customization mode lives in customizationMode.js
  */
 
-/** @type {Set<string>} */
-export const UPLOAD_PRODUCT_SLUGS = new Set([
-  'polaroids',
-  'mini-photobook',
-  'photobooth-strips',
-  'mini-bouquet',
-  'keepsake-frame',
-  'mini-frame',
-])
+import {
+  getCustomizationMode,
+  getLinePhotoRequirements,
+  isPhotoUploadProduct,
+  isWhatsAppCustomProduct,
+  PHOTO_UPLOAD_SLUGS,
+  WHATSAPP_CUSTOM_SLUGS,
+} from './customizationMode'
 
-/**
- * Checkout has no per-product photo caps — customers may upload as many as they need.
- * Kept for API compatibility; always returns no min/max.
- * @param {string | null | undefined} _slug
- * @param {number} [_orderQty]
- * @returns {{ min: number | null, max: number | null }}
- */
-export function getUploadPhotoRequirements(_slug, _orderQty = 1) {
-  return { min: null, max: null }
+export {
+  getCustomizationMode,
+  getLinePhotoRequirements,
+  isPhotoUploadProduct,
+  isWhatsAppCustomProduct,
+  PHOTO_UPLOAD_SLUGS,
+  WHATSAPP_CUSTOM_SLUGS,
 }
 
-/** @deprecated Use getUploadPhotoRequirements */
+/** @deprecated Use PHOTO_UPLOAD_SLUGS */
+export const UPLOAD_PRODUCT_SLUGS = PHOTO_UPLOAD_SLUGS
+
+/** @deprecated Use WHATSAPP_CUSTOM_SLUGS */
+export const CONTACT_PRODUCT_SLUGS = WHATSAPP_CUSTOM_SLUGS
+
+/**
+ * @param {string} slug
+ * @returns {'upload' | 'contact' | 'none'}
+ */
+export function getOrderFlowType(slug) {
+  const mode = getCustomizationMode(slug)
+  if (mode === 'photos') return 'upload'
+  if (mode === 'whatsapp') return 'contact'
+  return 'none'
+}
+
+/**
+ * @deprecated Prefer getLinePhotoRequirements
+ * @param {string | null | undefined} slug
+ * @param {number} [_orderQty]
+ */
+export function getUploadPhotoRequirements(slug, _orderQty = 1) {
+  if (!slug || !isPhotoUploadProduct(slug)) {
+    return { min: null, max: null }
+  }
+  const r = getLinePhotoRequirements({ slug, qty: _orderQty })
+  return { min: r.min, max: r.max }
+}
+
+/** @deprecated */
 export function getUploadPhotoLimit(slug) {
   return getUploadPhotoRequirements(slug).max
 }
 
-/** @type {Set<string>} */
-export const CONTACT_PRODUCT_SLUGS = new Set([
-  'custom-magazine',
-  'newspaper',
-  'mini-album',
-  'coloring-book',
-  'cd-journal',
-  'phone-case',
-  'tote-bag',
-])
-
 /**
- * @param {string} slug
- * @returns {'upload' | 'contact'}
- */
-export function getOrderFlowType(slug) {
-  if (UPLOAD_PRODUCT_SLUGS.has(slug)) return 'upload'
-  if (CONTACT_PRODUCT_SLUGS.has(slug)) return 'contact'
-  return 'contact'
-}
-
-/**
- * Whether checkout must collect personal photos for this order.
- * Bookmarks, stickers, cards, etc. are not in UPLOAD_PRODUCT_SLUGS.
+ * Whether this checkout needs on-site photos (any photo-upload product).
  * @param {{
  *   checkoutSource?: string
  *   slug?: string | null
- *   cartSnapshot?: { slug: string, name?: string, qty?: number }[] | null
+ *   cartSnapshot?: { slug: string, name?: string, qty?: number, lineId?: string }[] | null
  * }} p
  */
 export function orderNeedsPhotos(p) {
   if (p.checkoutSource === 'cart') {
-    return Boolean(p.cartSnapshot?.some((i) => UPLOAD_PRODUCT_SLUGS.has(i.slug)))
+    return Boolean(p.cartSnapshot?.some((i) => isPhotoUploadProduct(i.slug)))
   }
-  return Boolean(p.slug && UPLOAD_PRODUCT_SLUGS.has(p.slug))
+  return Boolean(p.slug && isPhotoUploadProduct(p.slug))
 }
 
-/** Max pictures allowed on the checkout details photo step. */
-export const CHECKOUT_PHOTO_MAX = 12
-
 /**
- * Checkout photo card: require photos for upload products (max CHECKOUT_PHOTO_MAX).
+ * Lines that need WhatsApp customization after submission.
  * @param {{
  *   checkoutSource?: string
  *   slug?: string | null
- *   cartSnapshot?: { slug: string, name?: string, qty?: number }[] | null
+ *   productName?: string
+ *   selectionSummary?: string
+ *   cartSnapshot?: { slug: string, name?: string, summary?: string }[] | null
  * }} p
- * @returns {{ needed: boolean, max: number, productLabels: string[] }}
  */
-export function getCheckoutPhotoRequirements(p) {
+export function getWhatsAppCustomLines(p) {
   if (p.checkoutSource === 'cart') {
-    const lines = (p.cartSnapshot ?? []).filter((i) =>
-      UPLOAD_PRODUCT_SLUGS.has(i.slug),
-    )
-    if (!lines.length) {
-      return { needed: false, max: CHECKOUT_PHOTO_MAX, productLabels: [] }
-    }
-    return {
-      needed: true,
-      max: CHECKOUT_PHOTO_MAX,
-      productLabels: lines.map((l) => l.name || l.slug),
-    }
+    return (p.cartSnapshot ?? [])
+      .filter((i) => isWhatsAppCustomProduct(i.slug))
+      .map((i) => ({
+        name: i.name || i.slug,
+        summary: i.summary || '',
+        slug: i.slug,
+      }))
+  }
+  if (p.slug && isWhatsAppCustomProduct(p.slug)) {
+    return [
+      {
+        name: p.productName || p.slug,
+        summary: p.selectionSummary || '',
+        slug: p.slug,
+      },
+    ]
+  }
+  return []
+}
+
+/**
+ * Photo-upload lines for checkout validation / UI.
+ * @param {{
+ *   checkoutSource?: string
+ *   slug?: string | null
+ *   productName?: string
+ *   orderQty?: number
+ *   cartSnapshot?: {
+ *     lineId: string
+ *     slug: string
+ *     name?: string
+ *     qty?: number
+ *     productId?: string
+ *     designPhotosRequired?: number | null
+ *     photosPerUnit?: number | null
+ *   }[] | null
+ * }} p
+ */
+export function getPhotoUploadLines(p) {
+  if (p.checkoutSource === 'cart') {
+    return (p.cartSnapshot ?? [])
+      .filter((i) => isPhotoUploadProduct(i.slug))
+      .map((i) => {
+        const req = getLinePhotoRequirements({
+          slug: i.slug,
+          qty: i.qty ?? 1,
+          designPhotosRequired: i.designPhotosRequired,
+          photosPerUnit: i.photosPerUnit,
+        })
+        return {
+          lineId: i.lineId,
+          slug: i.slug,
+          name: i.name || i.slug,
+          productId: i.productId || '',
+          qty: i.qty ?? 1,
+          min: req.min,
+          max: req.max,
+        }
+      })
   }
 
-  if (!p.slug || !UPLOAD_PRODUCT_SLUGS.has(p.slug)) {
-    return { needed: false, max: CHECKOUT_PHOTO_MAX, productLabels: [] }
-  }
-  return { needed: true, max: CHECKOUT_PHOTO_MAX, productLabels: [] }
+  if (!p.slug || !isPhotoUploadProduct(p.slug)) return []
+  const req = getLinePhotoRequirements({
+    slug: p.slug,
+    qty: p.orderQty ?? 1,
+  })
+  return [
+    {
+      lineId: `buy-now:${p.slug}`,
+      slug: p.slug,
+      name: p.productName || p.slug,
+      productId: '',
+      qty: p.orderQty ?? 1,
+      min: req.min,
+      max: req.max,
+    },
+  ]
 }
+
+/**
+ * @deprecated Prefer getPhotoUploadLines
+ */
+export function getCheckoutPhotoRequirements(p) {
+  const lines = getPhotoUploadLines(p)
+  if (!lines.length) {
+    return { needed: false, max: 0, min: 0, productLabels: [], lines: [] }
+  }
+  const max = lines.reduce((s, l) => s + l.max, 0)
+  const min = lines.reduce((s, l) => s + l.min, 0)
+  return {
+    needed: true,
+    max,
+    min,
+    productLabels: lines.map((l) => l.name),
+    lines,
+  }
+}
+
+/** @deprecated Prefer per-line getLinePhotoRequirements — kept for legacy UI */
+export const CHECKOUT_PHOTO_MAX = 50
 
 /** Fixed delivery charge (PKR) when customer opts in. */
 export const DELIVERY_CHARGE_RS = 300
@@ -111,7 +197,7 @@ export function getOrderTotalAmount(unitPrice, includeDelivery) {
 }
 
 /**
- * 50% advance now, 50% on delivery. Uses floor/remainder so amounts sum to full total.
+ * 50% advance now, 50% on delivery.
  * @param {number} fullTotal
  * @returns {{ advance: number, balanceOnDelivery: number }}
  */
@@ -125,16 +211,7 @@ export function splitAdvancePayment(fullTotal) {
 }
 
 /**
- * @param {{
- *   productName: string
- *   selectionLine?: string
- *   unitPrice: number
- *   quantity?: number
- *   includeDelivery?: boolean
- *   customer: { fullName: string; phone: string; city: string; address: string; notes?: string; includeDelivery?: boolean }
- *   imageCount?: number
- *   orderRef?: string | null
- * }} p
+ * @deprecated Legacy payment WhatsApp message — prefer confirmation WhatsApp CTA
  */
 export function buildOrderWhatsAppMessage(p) {
   const qty = Math.max(1, Math.min(99, Math.floor(Number(p.quantity) || 1)))
@@ -164,8 +241,7 @@ Address: ${c.address}`
 }
 
 /**
- * Contact-only products (no upload) — short WhatsApp intro.
- * @param {{ productName: string; selectionLine?: string; unitPrice?: number }} p
+ * @deprecated
  */
 export function buildContactWhatsAppMessage(p) {
   const price =

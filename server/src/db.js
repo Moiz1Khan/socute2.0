@@ -15,6 +15,28 @@ const dbPath =
 /** @type {import('sql.js').Database | null} */
 let db = null
 
+/**
+ * @param {import('sql.js').Database} database
+ * @param {string} table
+ * @param {string} column
+ * @param {string} typeSql e.g. "TEXT" or "TEXT DEFAULT 'draft'"
+ */
+function ensureColumn(database, table, column, typeSql) {
+  const stmt = database.prepare(`PRAGMA table_info(${table})`)
+  let found = false
+  while (stmt.step()) {
+    const row = stmt.getAsObject()
+    if (row.name === column) {
+      found = true
+      break
+    }
+  }
+  stmt.free()
+  if (!found) {
+    database.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${typeSql}`)
+  }
+}
+
 export async function initDb() {
   const SQL = await initSqlJs()
   fs.mkdirSync(path.dirname(dbPath), { recursive: true })
@@ -58,8 +80,26 @@ export async function initDb() {
     );
   `)
 
+  // Order submission status (not payment verification)
+  ensureColumn(db, 'orders', 'status', "TEXT DEFAULT 'draft'")
+  ensureColumn(db, 'orders', 'submitted_at', 'TEXT')
+  ensureColumn(db, 'orders', 'payment_proof_filename', 'TEXT')
+  ensureColumn(db, 'orders', 'payment_proof_original_name', 'TEXT')
+  ensureColumn(db, 'orders', 'payment_proof_mime', 'TEXT')
+  ensureColumn(db, 'orders', 'payment_proof_size', 'INTEGER')
+
+  // Per–line-item photo metadata
+  ensureColumn(db, 'order_uploads', 'line_item_id', 'TEXT')
+  ensureColumn(db, 'order_uploads', 'product_id', 'TEXT')
+  ensureColumn(db, 'order_uploads', 'product_slug', 'TEXT')
+  ensureColumn(db, 'order_uploads', 'product_name', 'TEXT')
+  ensureColumn(db, 'order_uploads', 'created_at', 'TEXT')
+
   db.run(
     `CREATE INDEX IF NOT EXISTS idx_order_uploads_order ON order_uploads(order_id);`,
+  )
+  db.run(
+    `CREATE INDEX IF NOT EXISTS idx_order_uploads_line ON order_uploads(order_id, line_item_id);`,
   )
 
   persist()
@@ -74,4 +114,8 @@ export function persist() {
 export function getDb() {
   if (!db) throw new Error('Database not initialized')
   return db
+}
+
+export function getDbPath() {
+  return dbPath
 }

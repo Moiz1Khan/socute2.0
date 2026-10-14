@@ -13,26 +13,46 @@ import UploadPage from './pages/UploadPage'
 import CustomerFormPage from './pages/CustomerFormPage'
 import PaymentPage from './pages/PaymentPage'
 import ContactRedirect from './pages/ContactRedirect'
+import OrderConfirmationPage from './pages/OrderConfirmationPage'
+import AdminPage from './pages/AdminPage'
 
-function AppShell() {
+function Providers({ children }) {
   return (
     <ShopProvider>
       <CartProvider>
-        <OrderFlowProvider>
-          <div className="boutique-shell relative min-h-svh">
-            <ListingScrollMemory />
-            <AnnouncementBar />
-            <ShopHeader />
-            <CartDelight />
-            <Outlet />
-          </div>
-        </OrderFlowProvider>
+        <OrderFlowProvider>{children}</OrderFlowProvider>
       </CartProvider>
     </ShopProvider>
   )
 }
 
+function AppShell() {
+  return (
+    <Providers>
+      <div className="boutique-shell relative min-h-svh">
+        <ListingScrollMemory />
+        <AnnouncementBar />
+        <ShopHeader />
+        <CartDelight />
+        <Outlet />
+      </div>
+    </Providers>
+  )
+}
+
+function AdminShell() {
+  return (
+    <Providers>
+      <AdminPage />
+    </Providers>
+  )
+}
+
 const router = createBrowserRouter([
+  {
+    path: '/admin',
+    element: <AdminShell />,
+  },
   {
     path: '/',
     element: <AppShell />,
@@ -41,6 +61,10 @@ const router = createBrowserRouter([
       { path: 'product/:slug', element: <ProductDetail /> },
       { path: 'checkout/customer', element: <CustomerFormPage /> },
       { path: 'checkout/payment', element: <PaymentPage /> },
+      {
+        path: 'order/confirmation/:orderId',
+        element: <OrderConfirmationPage />,
+      },
       { path: 'order/:slug/upload', element: <UploadPage /> },
       { path: 'order/:slug/customer', element: <CustomerFormPage /> },
       { path: 'order/:slug/payment', element: <PaymentPage /> },

@@ -101,14 +101,16 @@ export function FaqSection() {
             </h2>
           </div>
           <div className="store-faq__contact">
-            <a
-              href={WHATSAPP_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="store-faq__chip"
-            >
-              WhatsApp
-            </a>
+            {WHATSAPP_HREF ? (
+              <a
+                href={WHATSAPP_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="store-faq__chip"
+              >
+                WhatsApp
+              </a>
+            ) : null}
             <a href={EMAIL_HREF} className="store-faq__chip">
               Email
             </a>

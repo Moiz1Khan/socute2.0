@@ -337,11 +337,13 @@ export const products = [
     imageAlt:
       'Spiral-bound mini photobook with Polaroid-style pages, handwritten captions, and comb binding.',
     description:
-      'Tiny spiral photobook — Polaroid-style pages and captions in one pocket-sized keepsake.',
+      'Tiny spiral photobook — Polaroid-style pages in one pocket-sized keepsake.',
     detailBullets: [
       'Size 3.5×3.5 inches',
       'Includes 10 pictures',
     ],
+    /** Workflow B: photos only (no captions collected on site) */
+    photosPerUnit: 10,
     price: 1500,
   },
   {
@@ -466,6 +468,8 @@ export const products = [
     description:
       'Classic instant-film look — white borders and your memories in every print.',
     detailBullets: ['Size 3×3 inches'],
+    /** Workflow B: one photo per Polaroid print */
+    photosPerUnit: 1,
     price: 60,
   },
   {

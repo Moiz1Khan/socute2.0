@@ -5,12 +5,15 @@ import { getProductBySlug } from '../utils/products'
 import {
   DELIVERY_CHARGE_RS,
   getOrderTotalAmount,
+  getPhotoUploadLines,
+  getWhatsAppCustomLines,
   splitAdvancePayment,
 } from '../utils/orderFlow'
 import { useOrderFlow } from '../context/OrderFlowContext'
 import { formatOrderRef } from '../utils/formatOrderRef'
 import { useCart } from '../context/CartContext'
 import { confirmOrder } from '../api/ordersApi'
+import { writeConfirmationPayload } from './OrderConfirmationPage'
 import { IconCamera } from '../components/icons'
 
 const PAYMENT_ACCOUNT = {
@@ -34,14 +37,12 @@ export default function PaymentPage() {
     cartSnapshot,
     customer,
     serverOrderId,
-    clearOrder,
   } = useOrderFlow()
 
   const [paymentFile, setPaymentFile] = useState(null)
   const [paymentPreview, setPaymentPreview] = useState(null)
   const [confirming, setConfirming] = useState(false)
   const [confirmError, setConfirmError] = useState(null)
-  const [showConfirmed, setShowConfirmed] = useState(false)
 
   useEffect(() => {
     if (isCartCheckout) {
@@ -117,22 +118,39 @@ export default function PaymentPage() {
     setConfirming(true)
     try {
       await confirmOrder(serverOrderId, paymentFile)
-      setShowConfirmed(true)
+
+      const flowArgs = {
+        checkoutSource: isCartCheckout ? 'cart' : 'product',
+        slug: isCartCheckout ? null : slug,
+        productName,
+        selectionSummary,
+        cartSnapshot,
+      }
+      const firstName = String(customer.fullName || '')
+        .trim()
+        .split(/\s+/)[0]
+
+      writeConfirmationPayload(serverOrderId, {
+        clearCart: isCartCheckout,
+        customerFirstName: firstName || null,
+        whatsappProducts: getWhatsAppCustomLines(flowArgs),
+        photoProducts: getPhotoUploadLines({
+          ...flowArgs,
+          orderQty,
+        }).map((l) => ({ name: l.name, slug: l.slug })),
+      })
+
+      // Clear local cart after successful submission (confirmation page reads sessionStorage)
+      if (isCartCheckout) clearCart()
+      clearProof()
+      navigate(`/order/confirmation/${serverOrderId}`, { replace: true })
     } catch (e) {
       setConfirmError(
-        e instanceof Error ? e.message : 'Could not confirm your order',
+        e instanceof Error ? e.message : 'Could not submit your order',
       )
     } finally {
       setConfirming(false)
     }
-  }
-
-  const finishAndGoHome = () => {
-    if (isCartCheckout) clearCart()
-    clearOrder()
-    clearProof()
-    setShowConfirmed(false)
-    navigate('/')
   }
 
   return (
@@ -403,8 +421,12 @@ export default function PaymentPage() {
               onClick={handleConfirm}
               className="mt-6 w-full rounded-2xl bg-[#e66f98] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {confirming ? 'Confirming order…' : 'Confirm order'}
+              {confirming ? 'Submitting order…' : 'Submit order'}
             </button>
+            <p className="mt-3 text-[11px] leading-relaxed text-[#9ca3af]">
+              Submitting sends your order and payment screenshot for review. It
+              does not automatically verify JazzCash payment.
+            </p>
             {!serverOrderId && (
               <p className="mt-3 text-xs text-[#e66f98]">
                 Order was not saved. Go back to details and try again.
@@ -413,50 +435,6 @@ export default function PaymentPage() {
           </div>
         </motion.div>
       </div>
-
-      {showConfirmed && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="order-confirmed-title"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[#f6b6cc]/80 bg-[#fffcfd] shadow-2xl shadow-[rgba(73,60,67,0.12)]"
-          >
-            <div className="bg-[#e66f98] px-6 py-5">
-              <h2
-                id="order-confirmed-title"
-                className="font-display text-2xl font-semibold text-white"
-              >
-                Your order is confirmed
-              </h2>
-            </div>
-            <div className="px-6 py-6">
-              <p className="text-sm leading-relaxed text-[#493c43]">
-                You will be notified shortly after verification.
-              </p>
-              {serverOrderId && (
-                <p className="mt-3 text-xs text-[#6b7280]">
-                  Order ref:{' '}
-                  <span className="font-mono font-semibold text-[#493c43]">
-                    {formatOrderRef(serverOrderId)}
-                  </span>
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={finishAndGoHome}
-                className="mt-6 w-full rounded-2xl bg-[#e66f98] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[rgba(73,60,67,0.12)] transition hover:brightness-105"
-              >
-                Back to shop
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </main>
   )
 }

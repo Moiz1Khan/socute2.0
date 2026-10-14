@@ -18,7 +18,6 @@ import {
   ORDER_ID_SCHEME,
   SHORT_ORDER_ID_RE,
 } from './orderId.js'
-import { getUploadPhotoRequirements } from './uploadLimits.js'
 import { buildOrderZip, emailOrderZip } from './emailOrderZip.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -149,37 +148,6 @@ function orderExists(id) {
   return ok
 }
 
-function getOrderSlug(orderId) {
-  const db = getDb()
-  const stmt = db.prepare('SELECT slug, order_qty FROM orders WHERE id = ? LIMIT 1')
-  stmt.bind([orderId])
-  if (!stmt.step()) {
-    stmt.free()
-    return { slug: null, orderQty: 1 }
-  }
-  const row = stmt.getAsObject()
-  stmt.free()
-  return {
-    slug: typeof row.slug === 'string' ? row.slug : null,
-    orderQty: Math.max(1, Math.floor(Number(row.order_qty)) || 1),
-  }
-}
-
-function countOrderUploads(orderId) {
-  const db = getDb()
-  const stmt = db.prepare(
-    'SELECT COUNT(*) AS n FROM order_uploads WHERE order_id = ?',
-  )
-  stmt.bind([orderId])
-  if (!stmt.step()) {
-    stmt.free()
-    return 0
-  }
-  const row = stmt.getAsObject()
-  stmt.free()
-  return Number(row.n) || 0
-}
-
 function allocateOrderId() {
   for (let i = 0; i < 50; i++) {
     const id = generateShortOrderId()
@@ -252,8 +220,8 @@ app.post('/api/orders', orderCreateLimiter, (req, res) => {
       `INSERT INTO orders (
         id, created_at, checkout_source, slug, product_name, unit_price, order_qty,
         selection_summary, cart_snapshot_json, customer_json, include_delivery,
-        order_total, advance_amount, balance_on_delivery
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        order_total, advance_amount, balance_on_delivery, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         created_at,
@@ -269,6 +237,7 @@ app.post('/api/orders', orderCreateLimiter, (req, res) => {
         orderTotal,
         advanceAmount,
         balanceOnDelivery,
+        'draft',
       ],
     )
     persist()
@@ -322,35 +291,48 @@ app.post(
       return res.status(400).json({ error: 'No files (use field name "photos")' })
     }
 
-    const { slug: orderSlug, orderQty } = getOrderSlug(orderId)
-    const { min: photoMin, max: photoMax } = getUploadPhotoRequirements(
-      orderSlug,
-      orderQty,
+    // Reject uploads once order is already submitted
+    const dbCheck = getDb()
+    const stStmt = dbCheck.prepare(
+      'SELECT status FROM orders WHERE id = ? LIMIT 1',
     )
-    if (photoMin != null || photoMax != null) {
-      const existing = countOrderUploads(orderId)
-      const total = existing + files.length
+    stStmt.bind([orderId])
+    let status = 'draft'
+    if (stStmt.step()) {
+      status = String(stStmt.getAsObject().status || 'draft')
+    }
+    stStmt.free()
+    if (status === 'submitted') {
       const dir = path.join(uploadRoot, orderId)
-      const cleanup = () => {
-        for (const f of files) {
+      for (const f of files) {
+        try {
+          fs.unlinkSync(path.join(dir, f.filename))
+        } catch {
+          /* ignore */
+        }
+      }
+      return res.status(409).json({ error: 'Order already submitted' })
+    }
+
+    const lineItemId = String(req.body?.lineItemId || 'unassigned').slice(0, 200)
+    const productId = String(req.body?.productId || '').slice(0, 120)
+    const productSlug = String(req.body?.productSlug || '').slice(0, 120)
+    const productName = String(req.body?.productName || '').slice(0, 200)
+    const createdAt = new Date().toISOString()
+
+    // Soft mime check — keep originals on disk for print quality
+    for (const f of files) {
+      const mime = String(f.mimetype || '')
+      if (mime && !mime.startsWith('image/')) {
+        const dir = path.join(uploadRoot, orderId)
+        for (const x of files) {
           try {
-            fs.unlinkSync(path.join(dir, f.filename))
+            fs.unlinkSync(path.join(dir, x.filename))
           } catch {
             /* ignore */
           }
         }
-      }
-      if (photoMin != null && total < photoMin) {
-        cleanup()
-        return res.status(400).json({
-          error: `Upload at least ${photoMin} photos for this product`,
-        })
-      }
-      if (photoMax != null && total > photoMax) {
-        cleanup()
-        return res.status(400).json({
-          error: `Maximum ${photoMax} photos allowed for this product`,
-        })
+        return res.status(400).json({ error: 'Only image uploads are allowed' })
       }
     }
 
@@ -359,14 +341,21 @@ app.post(
       db.run('BEGIN')
       for (const f of files) {
         db.run(
-          `INSERT INTO order_uploads (order_id, original_name, stored_filename, mime_type, size_bytes)
-           VALUES (?, ?, ?, ?, ?)`,
+          `INSERT INTO order_uploads (
+            order_id, original_name, stored_filename, mime_type, size_bytes,
+            line_item_id, product_id, product_slug, product_name, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             orderId,
             f.originalname || 'unknown',
             f.filename,
             f.mimetype || null,
             f.size ?? null,
+            lineItemId,
+            productId || null,
+            productSlug || null,
+            productName || null,
+            createdAt,
           ],
         )
       }
@@ -379,11 +368,15 @@ app.post(
       } catch {
         /* ignore */
       }
-      deleteOrderAndFiles(orderId)
       return res.status(500).json({ error: 'Failed to record uploads' })
     }
 
-    res.json({ ok: true, count: files.length })
+    res.json({
+      ok: true,
+      count: files.length,
+      lineItemId,
+      productSlug: productSlug || null,
+    })
   },
 )
 
@@ -411,24 +404,65 @@ app.post(
       return res.status(400).json({ error: 'Payment proof must be an image' })
     }
 
+    // Persist payment proof metadata + mark as submitted (NOT payment-verified).
+    const submittedAt = new Date().toISOString()
+    try {
+      const db = getDb()
+      db.run(
+        `UPDATE orders SET
+          status = ?,
+          submitted_at = ?,
+          payment_proof_filename = ?,
+          payment_proof_original_name = ?,
+          payment_proof_mime = ?,
+          payment_proof_size = ?
+         WHERE id = ?`,
+        [
+          'submitted',
+          submittedAt,
+          req.file.filename,
+          req.file.originalname || null,
+          req.file.mimetype || null,
+          req.file.size ?? null,
+          orderId,
+        ],
+      )
+      persist()
+    } catch (e) {
+      console.error('[confirm] db', e)
+      return res.status(500).json({ error: 'Failed to save order submission' })
+    }
+
+    // Owner notification is best-effort — order is already marked submitted.
+    let emailSent = false
+    let emailError = null
     try {
       const pkg = await buildOrderZip(orderId, uploadRoot, {
         filename: req.file.filename,
         originalname: req.file.originalname,
       })
       await emailOrderZip(pkg)
-      return res.json({ ok: true, orderId })
+      emailSent = true
     } catch (e) {
-      console.error('[confirm]', e)
-      const msg =
+      console.error('[confirm] email', e)
+      emailError =
         e?.code === 'SMTP_NOT_CONFIGURED'
           ? e.message
           : e instanceof Error
             ? e.message
-            : 'Failed to confirm order'
-      const status = e?.code === 'SMTP_NOT_CONFIGURED' ? 503 : 500
-      return res.status(status).json({ error: msg })
+            : 'Failed to email order package'
+      // Do not fail the customer submission solely because SMTP is down.
     }
+
+    return res.json({
+      ok: true,
+      orderId,
+      status: 'submitted',
+      paymentVerified: false,
+      emailSent,
+      emailError,
+      note: 'Order submitted with payment screenshot. JazzCash payment is not automatically verified.',
+    })
   },
 )
 

@@ -1,8 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 import rateLimit from 'express-rate-limit'
-import { getDb } from './db.js'
+import { getDb, persist } from './db.js'
 import { isValidOrderIdParam } from './orderId.js'
+import { buildOrderZip } from './emailOrderZip.js'
 
 const adminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -33,6 +34,22 @@ function parseRows(stmt) {
   }
   stmt.free()
   return rows
+}
+
+function resolveOrderFile(uploadRoot, orderId, storedFilename) {
+  const base = path.basename(storedFilename)
+  if (base !== storedFilename || base === '.' || base === '..') {
+    return null
+  }
+  const dir = path.resolve(path.join(uploadRoot, orderId))
+  const full = path.join(dir, base)
+  const resolvedFile = path.resolve(full)
+  const rel = path.relative(dir, resolvedFile)
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    return null
+  }
+  if (!fs.existsSync(resolvedFile)) return null
+  return resolvedFile
 }
 
 /**
@@ -72,10 +89,11 @@ export function registerAdminRoutes(app, { uploadRoot }) {
     try {
       const db = getDb()
       const stmt = db.prepare(
-        `SELECT id, created_at, checkout_source, slug, product_name, unit_price, order_qty,
-                selection_summary, order_total, advance_amount, customer_json
+        `SELECT id, created_at, submitted_at, status, checkout_source, slug, product_name,
+                unit_price, order_qty, selection_summary, order_total, advance_amount,
+                customer_json, payment_proof_filename
          FROM orders
-         ORDER BY datetime(created_at) DESC
+         ORDER BY datetime(COALESCE(submitted_at, created_at)) DESC
          LIMIT 500`,
       )
       const raw = parseRows(stmt)
@@ -89,6 +107,8 @@ export function registerAdminRoutes(app, { uploadRoot }) {
         return {
           id: row.id,
           createdAt: row.created_at,
+          submittedAt: row.submitted_at || null,
+          status: row.status || 'draft',
           checkoutSource: row.checkout_source,
           slug: row.slug,
           productName: row.product_name,
@@ -97,6 +117,8 @@ export function registerAdminRoutes(app, { uploadRoot }) {
           selectionSummary: row.selection_summary,
           orderTotal: row.order_total,
           advanceAmount: row.advance_amount,
+          hasPaymentProof: Boolean(row.payment_proof_filename),
+          paymentVerified: false,
           customerPreview: {
             fullName: customer.fullName,
             phone: customer.phone,
@@ -144,15 +166,34 @@ export function registerAdminRoutes(app, { uploadRoot }) {
       }
 
       const uStmt = db.prepare(
-        'SELECT id, original_name, stored_filename, mime_type, size_bytes FROM order_uploads WHERE order_id = ? ORDER BY id ASC',
+        `SELECT id, original_name, stored_filename, mime_type, size_bytes,
+                line_item_id, product_id, product_slug, product_name, created_at
+         FROM order_uploads WHERE order_id = ? ORDER BY id ASC`,
       )
       uStmt.bind([id])
       const uploads = parseRows(uStmt)
+
+      const uploadsByLine = {}
+      for (const u of uploads) {
+        const key = u.line_item_id || 'unassigned'
+        if (!uploadsByLine[key]) {
+          uploadsByLine[key] = {
+            lineItemId: key,
+            productId: u.product_id,
+            productSlug: u.product_slug,
+            productName: u.product_name,
+            files: [],
+          }
+        }
+        uploadsByLine[key].files.push(u)
+      }
 
       res.json({
         order: {
           id: orderRow.id,
           createdAt: orderRow.created_at,
+          submittedAt: orderRow.submitted_at || null,
+          status: orderRow.status || 'draft',
           checkoutSource: orderRow.checkout_source,
           slug: orderRow.slug,
           productName: orderRow.product_name,
@@ -165,8 +206,18 @@ export function registerAdminRoutes(app, { uploadRoot }) {
           balanceOnDelivery: orderRow.balance_on_delivery,
           cartSnapshot,
           customer,
+          paymentVerified: false,
+          paymentProof: orderRow.payment_proof_filename
+            ? {
+                storedFilename: orderRow.payment_proof_filename,
+                originalName: orderRow.payment_proof_original_name,
+                mimeType: orderRow.payment_proof_mime,
+                sizeBytes: orderRow.payment_proof_size,
+              }
+            : null,
         },
         uploads,
+        uploadsByLine: Object.values(uploadsByLine),
       })
     } catch (e) {
       console.error(e)
@@ -188,21 +239,93 @@ export function registerAdminRoutes(app, { uploadRoot }) {
       if (!isValidOrderIdParam(orderId)) {
         return res.status(400).json({ error: 'Invalid order id' })
       }
-      const base = path.basename(storedFilename)
-      if (base !== storedFilename || base === '.' || base === '..') {
-        return res.status(400).json({ error: 'Invalid filename' })
-      }
-      const dir = path.resolve(path.join(uploadRoot, orderId))
-      const full = path.join(dir, base)
-      const resolvedFile = path.resolve(full)
-      const rel = path.relative(dir, resolvedFile)
-      if (rel.startsWith('..') || path.isAbsolute(rel)) {
-        return res.status(403).end()
-      }
-      if (!fs.existsSync(resolvedFile)) {
+      const resolvedFile = resolveOrderFile(uploadRoot, orderId, storedFilename)
+      if (!resolvedFile) {
         return res.status(404).end()
       }
       res.sendFile(resolvedFile)
+    },
+  )
+
+  app.get(
+    '/api/admin/orders/:id/payment-proof',
+    requireAdmin,
+    (req, res) => {
+      const id = req.params.id
+      if (!isValidOrderIdParam(id)) {
+        return res.status(400).json({ error: 'Invalid order id' })
+      }
+      const db = getDb()
+      const stmt = db.prepare(
+        'SELECT payment_proof_filename, payment_proof_original_name FROM orders WHERE id = ?',
+      )
+      stmt.bind([id])
+      if (!stmt.step()) {
+        stmt.free()
+        return res.status(404).json({ error: 'Order not found' })
+      }
+      const row = stmt.getAsObject()
+      stmt.free()
+      const filename = row.payment_proof_filename
+      if (!filename) {
+        return res.status(404).json({ error: 'No payment screenshot on file' })
+      }
+      const resolved = resolveOrderFile(uploadRoot, id, String(filename))
+      if (!resolved) return res.status(404).end()
+      const downloadName =
+        row.payment_proof_original_name || `payment-${id}.jpg`
+      res.download(resolved, String(downloadName))
+    },
+  )
+
+  app.get('/api/admin/orders/:id/zip', requireAdmin, async (req, res) => {
+    const id = req.params.id
+    if (!isValidOrderIdParam(id)) {
+      return res.status(400).json({ error: 'Invalid order id' })
+    }
+    try {
+      const pkg = await buildOrderZip(id, uploadRoot, null)
+      res.download(pkg.zipPath, `socutesy-order-${id}.zip`)
+    } catch (e) {
+      console.error(e)
+      res.status(500).json({
+        error: e instanceof Error ? e.message : 'Failed to build ZIP',
+      })
+    }
+  })
+
+  /** Mark fulfillment complete (manual) — does not delete photos yet. */
+  app.post(
+    '/api/admin/orders/:id/mark-fulfilled',
+    requireAdmin,
+    (req, res) => {
+      const id = req.params.id
+      if (!isValidOrderIdParam(id)) {
+        return res.status(400).json({ error: 'Invalid order id' })
+      }
+      try {
+        const db = getDb()
+        const stmt = db.prepare('SELECT id, status FROM orders WHERE id = ?')
+        stmt.bind([id])
+        if (!stmt.step()) {
+          stmt.free()
+          return res.status(404).json({ error: 'Order not found' })
+        }
+        stmt.free()
+        db.run(`UPDATE orders SET status = ? WHERE id = ?`, [
+          'fulfilled',
+          id,
+        ])
+        persist()
+        res.json({
+          ok: true,
+          status: 'fulfilled',
+          note: 'Photos are retained until a deletion workflow is approved.',
+        })
+      } catch (e) {
+        console.error(e)
+        res.status(500).json({ error: 'Failed to update status' })
+      }
     },
   )
 }

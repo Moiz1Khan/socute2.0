@@ -6,10 +6,14 @@ import {
   adminLogout,
   adminMe,
   adminFileUrl,
+  adminOrderZipUrl,
+  adminPaymentProofUrl,
   fetchOrderDetail,
   fetchOrders,
+  markOrderFulfilled,
 } from '../api/adminApi'
 import { formatOrderRef } from '../utils/formatOrderRef'
+import { isWhatsAppCustomProduct, isPhotoUploadProduct } from '../utils/customizationMode'
 
 export default function AdminPage() {
   const [configured, setConfigured] = useState(null)
@@ -22,6 +26,7 @@ export default function AdminPage() {
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [actionMsg, setActionMsg] = useState(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -37,27 +42,24 @@ export default function AdminPage() {
     }
   }, [])
 
+  const reloadList = useCallback(async () => {
+    setListError(null)
+    try {
+      const { orders: list } = await fetchOrders()
+      setOrders(list ?? [])
+    } catch (e) {
+      setListError(e instanceof Error ? e.message : 'Could not load orders')
+    }
+  }, [])
+
   useEffect(() => {
     refresh()
   }, [refresh])
 
   useEffect(() => {
     if (!authed) return
-    let cancelled = false
-    ;(async () => {
-      setListError(null)
-      try {
-        const { orders: list } = await fetchOrders()
-        if (!cancelled) setOrders(list ?? [])
-      } catch (e) {
-        if (!cancelled)
-          setListError(e instanceof Error ? e.message : 'Could not load orders')
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [authed])
+    reloadList()
+  }, [authed, reloadList])
 
   useEffect(() => {
     if (!selectedId || !authed) {
@@ -102,6 +104,22 @@ export default function AdminPage() {
     await refresh()
   }
 
+  const handleFulfilled = async () => {
+    if (!selectedId) return
+    setActionMsg(null)
+    try {
+      await markOrderFulfilled(selectedId)
+      setActionMsg(
+        'Marked fulfilled. Photos are still retained until a deletion workflow is approved.',
+      )
+      const d = await fetchOrderDetail(selectedId)
+      setDetail(d)
+      await reloadList()
+    } catch (e) {
+      setActionMsg(e instanceof Error ? e.message : 'Update failed')
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-svh bg-[#fffcfd] px-4 py-16 text-center text-sm text-[#6b7280]">
@@ -115,9 +133,10 @@ export default function AdminPage() {
       <main className="mx-auto max-w-lg px-4 py-16">
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Admin is not configured on the server. Set{' '}
-          <code className="rounded bg-[#fffcfd]/90 px-1">ADMIN_PASSWORD</code> and{' '}
-          <code className="rounded bg-[#fffcfd]/90 px-1">SESSION_SECRET</code> in the
-          API environment, then restart.
+          <code className="rounded bg-[#fffcfd]/90 px-1">ADMIN_PASSWORD</code>{' '}
+          and{' '}
+          <code className="rounded bg-[#fffcfd]/90 px-1">SESSION_SECRET</code>{' '}
+          in the API environment, then restart.
         </p>
         <Link
           to="/"
@@ -174,6 +193,7 @@ export default function AdminPage() {
   }
 
   const c = detail?.order?.customer
+  const cartLines = detail?.order?.cartSnapshot
 
   return (
     <main className="min-h-svh bg-[#fffcfd] px-4 py-8 sm:px-6">
@@ -182,7 +202,8 @@ export default function AdminPage() {
           <div>
             <h1 className="font-semibold text-2xl text-[#831843]">Orders</h1>
             <p className="mt-1 text-sm text-[#6b7280]">
-              Customer details and uploaded photos (newest first).
+              Submitted orders, payment screenshots, and customer photos.
+              Payment is never auto-verified.
             </p>
           </div>
           <div className="flex gap-3">
@@ -212,7 +233,9 @@ export default function AdminPage() {
           <div className="lg:col-span-1">
             <ul className="max-h-[70vh] space-y-2 overflow-y-auto rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-2">
               {orders.length === 0 && (
-                <li className="px-3 py-3 text-sm text-[#9ca3af]">No orders yet.</li>
+                <li className="px-3 py-3 text-sm text-[#9ca3af]">
+                  No orders yet.
+                </li>
               )}
               {orders.map((o) => (
                 <li key={o.id}>
@@ -233,7 +256,7 @@ export default function AdminPage() {
                         selectedId === o.id ? 'text-white/90' : 'text-[#9ca3af]'
                       }`}
                     >
-                      {formatOrderRef(o.id)}
+                      {formatOrderRef(o.id)} · {o.status || 'draft'}
                     </span>
                     <span
                       className={`mt-0.5 block text-xs ${
@@ -263,9 +286,29 @@ export default function AdminPage() {
             {selectedId && !detailLoading && detail && (
               <div className="space-y-6">
                 <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
-                    Order
-                  </h2>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
+                      Order
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={adminOrderZipUrl(detail.order.id)}
+                        className="rounded-xl bg-[#e66f98] px-3 py-1.5 text-xs font-semibold text-white"
+                      >
+                        Download ZIP
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleFulfilled}
+                        className="rounded-xl border border-[#f6b6cc] px-3 py-1.5 text-xs font-semibold text-[#e66f98]"
+                      >
+                        Mark fulfilled
+                      </button>
+                    </div>
+                  </div>
+                  {actionMsg && (
+                    <p className="mt-3 text-xs text-[#755f69]">{actionMsg}</p>
+                  )}
                   <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                     <div>
                       <dt className="text-[#9ca3af]">Reference</dt>
@@ -274,11 +317,26 @@ export default function AdminPage() {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-[#9ca3af]">Placed</dt>
+                      <dt className="text-[#9ca3af]">Status</dt>
+                      <dd className="text-[#374151]">
+                        {detail.order.status || 'draft'}
+                        <span className="mt-0.5 block text-[11px] text-[#9ca3af]">
+                          Payment not auto-verified
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#9ca3af]">Created</dt>
                       <dd className="text-[#374151]">{detail.order.createdAt}</dd>
                     </div>
                     <div>
-                      <dt className="text-[#9ca3af]">Product</dt>
+                      <dt className="text-[#9ca3af]">Submitted</dt>
+                      <dd className="text-[#374151]">
+                        {detail.order.submittedAt || '—'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#9ca3af]">Product / cart</dt>
                       <dd className="text-[#374151]">{detail.order.productName}</dd>
                     </div>
                     <div>
@@ -289,12 +347,42 @@ export default function AdminPage() {
                     </div>
                   </dl>
                   {detail.order.selectionSummary && (
-                    <p className="mt-3 text-sm text-[#6b7280]">
+                    <p className="mt-3 whitespace-pre-wrap text-sm text-[#6b7280]">
                       <span className="font-medium text-[#9d174d]">Options: </span>
                       {detail.order.selectionSummary}
                     </p>
                   )}
                 </div>
+
+                {Array.isArray(cartLines) && cartLines.length > 0 && (
+                  <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
+                      Line items
+                    </h2>
+                    <ul className="mt-3 space-y-2 text-sm text-[#374151]">
+                      {cartLines.map((line) => (
+                        <li
+                          key={line.lineId}
+                          className="rounded-xl border border-[#fdf0f5] px-3 py-2"
+                        >
+                          <p className="font-medium">
+                            {line.name} × {line.qty}
+                          </p>
+                          <p className="text-xs text-[#6b7280]">{line.summary}</p>
+                          <p className="mt-1 text-[11px] text-[#9ca3af]">
+                            Mode:{' '}
+                            {isPhotoUploadProduct(line.slug)
+                              ? 'website photos'
+                              : isWhatsAppCustomProduct(line.slug)
+                                ? 'WhatsApp customization'
+                                : 'standard'}{' '}
+                            · line {line.lineId}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
@@ -308,7 +396,10 @@ export default function AdminPage() {
                       </li>
                       <li>
                         <span className="text-[#9ca3af]">Phone </span>
-                        <a className="text-[#e66f98] underline" href={`tel:${c.phone}`}>
+                        <a
+                          className="text-[#e66f98] underline"
+                          href={`tel:${c.phone}`}
+                        >
                           {c.phone}
                         </a>
                       </li>
@@ -332,31 +423,112 @@ export default function AdminPage() {
 
                 <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
-                    Uploaded photos ({detail.uploads?.length ?? 0})
+                    Payment screenshot
                   </h2>
-                  {!detail.uploads?.length && (
-                    <p className="mt-3 text-sm text-[#9ca3af]">No files for this order.</p>
-                  )}
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {detail.uploads?.map((u) => (
+                  {detail.order.paymentProof ? (
+                    <div className="mt-4 space-y-3">
                       <a
-                        key={u.id}
-                        href={adminFileUrl(detail.order.id, u.stored_filename)}
+                        href={adminPaymentProofUrl(detail.order.id)}
                         target="_blank"
                         rel="noreferrer"
-                        className="group block overflow-hidden rounded-2xl border border-[#fdf0f5] bg-[#fffcfd]"
+                        className="inline-flex text-sm font-semibold text-[#e66f98] underline"
+                      >
+                        Download payment screenshot
+                      </a>
+                      <a
+                        href={adminFileUrl(
+                          detail.order.id,
+                          detail.order.paymentProof.storedFilename,
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block overflow-hidden rounded-2xl border border-[#fdf0f5]"
                       >
                         <img
-                          src={adminFileUrl(detail.order.id, u.stored_filename)}
-                          alt={u.original_name || 'Upload'}
-                          className="aspect-square w-full object-cover transition group-hover:opacity-95"
+                          src={adminFileUrl(
+                            detail.order.id,
+                            detail.order.paymentProof.storedFilename,
+                          )}
+                          alt="Payment screenshot"
+                          className="max-h-72 w-full object-contain bg-[#fdf0f5]"
                         />
-                        <p className="truncate px-2 py-1.5 text-[10px] text-[#6b7280]">
-                          {u.original_name}
-                        </p>
                       </a>
-                    ))}
-                  </div>
+                      <p className="text-[11px] text-[#9ca3af]">
+                        Manual review required — not auto-verified.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[#9ca3af]">
+                      No payment screenshot on file.
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-[#fdf0f5] bg-[#fffcfd] p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-[#e66f98]">
+                    Customer photos ({detail.uploads?.length ?? 0})
+                  </h2>
+                  {!(detail.uploadsByLine?.length || detail.uploads?.length) && (
+                    <p className="mt-3 text-sm text-[#9ca3af]">
+                      No product photos for this order (WhatsApp-customization
+                      products collect details off-site).
+                    </p>
+                  )}
+                  {(detail.uploadsByLine?.length
+                    ? detail.uploadsByLine
+                    : [
+                        {
+                          lineItemId: 'all',
+                          productName: 'Photos',
+                          files: detail.uploads || [],
+                        },
+                      ]
+                  ).map((group) =>
+                    group.files?.length ? (
+                      <div key={group.lineItemId} className="mt-5">
+                        <p className="text-xs font-semibold text-[#493c43]">
+                          {group.productName || group.productSlug || 'Photos'}
+                          <span className="ml-2 font-normal text-[#9ca3af]">
+                            {group.files.length} file
+                            {group.files.length === 1 ? '' : 's'} · line{' '}
+                            {group.lineItemId}
+                          </span>
+                        </p>
+                        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          {group.files.map((u) => (
+                            <a
+                              key={u.id}
+                              href={adminFileUrl(
+                                detail.order.id,
+                                u.stored_filename,
+                              )}
+                              target="_blank"
+                              rel="noreferrer"
+                              download={u.original_name}
+                              className="group block overflow-hidden rounded-2xl border border-[#fdf0f5] bg-[#fffcfd]"
+                            >
+                              <img
+                                src={adminFileUrl(
+                                  detail.order.id,
+                                  u.stored_filename,
+                                )}
+                                alt={u.original_name || 'Upload'}
+                                className="aspect-square w-full object-cover transition group-hover:opacity-95"
+                              />
+                              <p className="truncate px-2 py-1.5 text-[10px] text-[#6b7280]">
+                                {u.original_name}
+                              </p>
+                              {u.created_at && (
+                                <p className="px-2 pb-1.5 text-[10px] text-[#9ca3af]">
+                                  {u.created_at}
+                                </p>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null,
+                  )}
                 </div>
               </div>
             )}

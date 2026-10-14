@@ -53,7 +53,8 @@ function getOrderRow(orderId) {
 function listOrderUploads(orderId) {
   const db = getDb()
   const stmt = db.prepare(
-    'SELECT original_name, stored_filename FROM order_uploads WHERE order_id = ? ORDER BY id ASC',
+    `SELECT original_name, stored_filename, line_item_id, product_slug, product_name
+     FROM order_uploads WHERE order_id = ? ORDER BY id ASC`,
   )
   stmt.bind([orderId])
   const rows = []
@@ -84,11 +85,15 @@ export function buildOrderDetailsText(row) {
   }
 
   const lines = [
-    'SoCutesy — New order',
-    '====================',
+    'SoCutesy — New order submission',
+    '==============================',
     `Order ID: ${row.id}`,
     `Created: ${row.created_at}`,
+    `Submitted: ${row.submitted_at || '—'}`,
+    `Status: ${row.status || 'draft'}`,
     `Checkout: ${row.checkout_source}`,
+    '',
+    'NOTE: Payment screenshot attached does NOT mean JazzCash was verified automatically.',
     '',
     'Product',
     '-------',
@@ -104,7 +109,7 @@ export function buildOrderDetailsText(row) {
     lines.push('Cart lines', '----------')
     for (const line of cartLines) {
       lines.push(
-        `• ${line.name}${line.summary ? ` (${line.summary})` : ''} × ${line.qty} — RS. ${Number(line.unitPrice * line.qty).toLocaleString()}`,
+        `• ${line.name}${line.summary ? ` (${line.summary})` : ''} × ${line.qty} — RS. ${Number(line.unitPrice * line.qty).toLocaleString()} [line ${line.lineId || '—'}]`,
       )
     }
     lines.push('')
@@ -126,14 +131,20 @@ export function buildOrderDetailsText(row) {
     `Advance (50%): RS. ${Number(row.advance_amount).toLocaleString()}`,
     `Balance on delivery: RS. ${Number(row.balance_on_delivery).toLocaleString()}`,
     '',
-    'This package includes product photos (if any) and the payment screenshot.',
+    'Photos are grouped by product/line in the ZIP when available.',
   )
 
   return lines.join('\n')
 }
 
+function safeFolder(name) {
+  return String(name || 'item')
+    .replace(/[/\\?%*:|"<>]/g, '_')
+    .slice(0, 80)
+}
+
 /**
- * Build a ZIP buffer for an order (details + photos + payment proof).
+ * Build a ZIP for an order (details + photos by line + payment proof).
  * @param {string} orderId
  * @param {string} uploadRoot
  * @param {{ filename: string, originalname?: string } | null} paymentFile
@@ -161,21 +172,44 @@ export async function buildOrderZip(orderId, uploadRoot, paymentFile) {
   archive.append(detailsText, { name: 'order-details.txt' })
 
   const uploads = listOrderUploads(orderId)
+  const usedNames = new Set()
   for (const u of uploads) {
     const stored = String(u.stored_filename || '')
     const abs = path.join(orderDir, stored)
     if (!stored || !fs.existsSync(abs)) continue
-    const safeName = String(u.original_name || stored).replace(
+    const folder = safeFolder(
+      u.product_name || u.product_slug || u.line_item_id || 'photos',
+    )
+    let safeName = String(u.original_name || stored).replace(
       /[/\\?%*:|"<>]/g,
       '_',
     )
-    archive.file(abs, { name: `photos/${safeName}` })
+    let unique = `${folder}/${safeName}`
+    let n = 1
+    while (usedNames.has(unique)) {
+      const ext = path.extname(safeName)
+      const base = path.basename(safeName, ext)
+      unique = `${folder}/${base}-${n}${ext}`
+      n += 1
+    }
+    usedNames.add(unique)
+    archive.file(abs, { name: `photos/${unique}` })
   }
 
-  if (paymentFile?.filename) {
-    const abs = path.join(orderDir, paymentFile.filename)
+  const proofName =
+    paymentFile?.filename ||
+    (typeof row.payment_proof_filename === 'string'
+      ? row.payment_proof_filename
+      : null)
+  const proofOriginal =
+    paymentFile?.originalname ||
+    (typeof row.payment_proof_original_name === 'string'
+      ? row.payment_proof_original_name
+      : null)
+  if (proofName) {
+    const abs = path.join(orderDir, proofName)
     if (fs.existsSync(abs)) {
-      const ext = path.extname(paymentFile.originalname || paymentFile.filename)
+      const ext = path.extname(proofOriginal || proofName)
       archive.file(abs, {
         name: `payment-proof/payment-screenshot${ext || '.jpg'}`,
       })
@@ -213,7 +247,7 @@ export async function emailOrderZip(pkg) {
   await transporter.sendMail({
     from: cfg.from,
     to: cfg.ownerEmail,
-    subject: `SoCutesy order ${pkg.orderId}`,
+    subject: `SoCutesy order ${pkg.orderId} (submitted — payment not auto-verified)`,
     text: `${pkg.detailsText}\n\nFull package attached as ZIP.`,
     attachments: [
       {
