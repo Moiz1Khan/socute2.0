@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { fadeUp } from '../../utils/motionPresets'
 
 /**
- * How to Order — compact editorial three-step guide.
+ * How to Order — plain three-step guide matching the real checkout flow.
  * Process and payment policy unchanged.
  */
 export function HowToOrder() {
@@ -10,19 +10,19 @@ export function HowToOrder() {
 
   const steps = [
     {
-      n: '01',
-      title: 'Choose your gift',
-      body: 'Browse the shop and open a product to pick size, paper, design, or other options.',
+      n: '1',
+      title: 'Pick your gift',
+      body: 'Browse the shop, open a product, and choose your options (size, paper, design, quantity). Then tap Place order or Add to cart.',
     },
     {
-      n: '02',
-      title: 'Personalize your order',
-      body: 'Add your selections and place the order. Photos and details are collected at checkout when needed.',
+      n: '2',
+      title: 'Add details & photos',
+      body: 'At checkout, enter your name, phone, and address. If the product needs photos, upload them on the same page — we show how many you need.',
     },
     {
-      n: '03',
-      title: 'Checkout & pay',
-      body: 'Complete your details online. Payment is online with 50% advance and the remaining 50% when you receive your order.',
+      n: '3',
+      title: 'Pay 50% to confirm',
+      body: 'Pay half online and upload your payment screenshot. The remaining 50% is paid when you receive your order.',
     },
   ]
 
@@ -34,10 +34,13 @@ export function HowToOrder() {
     >
       <div className="store-wrap">
         <motion.header className="order-guide__head" {...fadeUp(reduceMotion, 0)}>
-          <p className="order-guide__eyebrow">A little guide</p>
+          <p className="order-guide__eyebrow">Order in 3 steps</p>
           <h2 id="how-to-order-heading" className="order-guide__title font-display">
             How to Order
           </h2>
+          <p className="order-guide__lead">
+            Follow these steps on the website — no WhatsApp order needed.
+          </p>
         </motion.header>
 
         <ol className="order-guide__steps">
@@ -56,6 +59,7 @@ export function HowToOrder() {
                 ) : null}
               </div>
               <div className="order-guide__copy">
+                <p className="order-guide__step-label">Step {step.n}</p>
                 <h3 className="order-guide__step-title">{step.title}</h3>
                 <p className="order-guide__step-body">{step.body}</p>
               </div>
