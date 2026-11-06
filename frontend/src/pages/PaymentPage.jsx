@@ -33,6 +33,7 @@ export default function PaymentPage() {
     productName,
     unitPrice,
     orderQty,
+    selectionSummary,
     checkoutSource,
     cartSnapshot,
     customer,
@@ -44,30 +45,38 @@ export default function PaymentPage() {
   const [confirming, setConfirming] = useState(false)
   const [confirmError, setConfirmError] = useState(null)
 
-  useEffect(() => {
-    if (isCartCheckout) {
-      if (checkoutSource !== 'cart' || !cartSnapshot?.length) {
-        navigate('/', { replace: true })
-      }
-      return
-    }
-    if (!product) {
-      navigate('/', { replace: true })
-    }
-  }, [isCartCheckout, checkoutSource, cartSnapshot, product, navigate])
+  const arrivedFromDetails = Boolean(location.state?.fromDetails)
 
   useEffect(() => {
     if (isCartCheckout) {
-      if (!customer) {
-        navigate('/checkout/customer', { replace: true })
-      }
+      if (checkoutSource === 'cart' && cartSnapshot?.length) return
+      if (arrivedFromDetails) return
+      navigate('/', { replace: true })
+      return
+    }
+    if (!product) {
+      if (!arrivedFromDetails) navigate('/', { replace: true })
+    }
+  }, [
+    isCartCheckout,
+    checkoutSource,
+    cartSnapshot,
+    product,
+    navigate,
+    arrivedFromDetails,
+  ])
+
+  useEffect(() => {
+    if (customer) return
+    // Just left details — context may not have flushed yet; don't bounce immediately
+    if (arrivedFromDetails) return
+    if (isCartCheckout) {
+      navigate('/checkout/customer', { replace: true })
       return
     }
     if (!product) return
-    if (!customer) {
-      navigate(`/order/${slug}/customer`, { replace: true })
-    }
-  }, [isCartCheckout, product, slug, customer, navigate])
+    navigate(`/order/${slug}/customer`, { replace: true })
+  }, [isCartCheckout, product, slug, customer, navigate, arrivedFromDetails])
 
   useEffect(() => {
     return () => {
@@ -75,12 +84,28 @@ export default function PaymentPage() {
     }
   }, [paymentPreview])
 
+  // Payment step only needs persisted order + customer — do not require
+  // getProductBySlug(slug) (slug/catalog drift would otherwise infinite "Loading…").
+  const cartReady =
+    checkoutSource === 'cart' &&
+    Array.isArray(cartSnapshot) &&
+    cartSnapshot.length > 0
+  const productFlowReady = Boolean(String(productName || '').trim())
   const ready =
-    customer &&
-    (isCartCheckout
-      ? checkoutSource === 'cart' && cartSnapshot?.length
-      : Boolean(product))
-  if (!ready || !customer) return null
+    Boolean(customer) &&
+    Boolean(serverOrderId) &&
+    (isCartCheckout ? cartReady : productFlowReady)
+  if (!ready) {
+    if (arrivedFromDetails) {
+      return (
+        <main className="min-h-[50vh] bg-[#fffcfd] px-4 py-16 text-center">
+          <p className="text-sm font-medium text-[#755f69]">Loading checkout…</p>
+        </main>
+      )
+    }
+    return null
+  }
+  if (!customer) return null
 
   const includeDelivery = customer.includeDelivery !== false
   const qty = Math.max(1, orderQty || 1)
