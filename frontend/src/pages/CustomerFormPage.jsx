@@ -208,11 +208,14 @@ export default function CustomerFormPage() {
 
       setCustomer(data)
       setServerOrderId(id)
-      if (isCartCheckout) {
-        navigate('/checkout/payment')
-        return
-      }
-      navigate(`/order/${slug}/payment`)
+      // Defer navigation so OrderFlow context commits before PaymentPage mounts
+      // (otherwise payment step can see stale null customer / order id and redirect).
+      const paymentPath = isCartCheckout
+        ? '/checkout/payment'
+        : `/order/${slug}/payment`
+      setTimeout(() => {
+        navigate(paymentPath, { state: { fromDetails: true } })
+      }, 0)
     } catch (e) {
       const msg =
         e instanceof Error ? e.message : 'Could not save your order'

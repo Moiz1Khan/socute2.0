@@ -88,7 +88,9 @@ export function SiteFooter() {
                 <Link to={{ pathname: '/', hash: '#faqs' }}>FAQs</Link>
               </li>
               <li>
-                <Link to="/checkout/customer">Checkout</Link>
+                <Link to={{ pathname: '/', hash: '#products-top' }}>
+                  Start an order
+                </Link>
               </li>
               {WA_SUPPORT ? (
                 <li>
